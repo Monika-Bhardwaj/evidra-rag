@@ -1,0 +1,32 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+dist/
+build/
+*.log
+
+# Index and processed artifacts
+data/processed/
+data/*.json
+index/
+*.faiss
+*.pkl
+*.bin
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Model caches
+.cache/huggingface/

@@ -1,0 +1,26 @@
+flowchart TD
+    PDF[PDF Source<br/>Agent-as-a-Judge.pdf] --> LOAD[Document Loader<br/>PyMuPDF / pypdf fallback]
+    LOAD --> PRE[Text Preprocessor<br/>cleanup / normalization]
+    PRE --> CH[Semantic Chunker<br/>section-aware, tables kept whole]
+    CH --> META[Metadata Enrichment<br/>page / section / chunk_type]
+    META --> EMB[Embedding Model<br/>sentence-transformers local]
+    EMB --> VDB[(Vector Database / Index<br/>FAISS, persisted)]
+
+    UQ[USER QUERY] --> QP[Query Preprocessor<br/>classification + expansion]
+    QP --> DENSE[Dense Retrieval<br/>FAISS cosine]
+    QP --> SPARSE[BM25 Retrieval<br/>rank_bm25]
+    DENSE --> HYB[Hybrid Retrieval<br/>alpha-weighted / RRF]
+    SPARSE --> HYB
+    HYB --> RERANK[Optional Reranker<br/>cross-encoder]
+    RERANK --> EVID[Top-K Evidence]
+    EVID --> CTX[Context Construction<br/>compact, page/section/chunk]
+    CTX --> GEN[Grounded LLM Prompt]
+    GEN --> LLM[Answer Generator]
+    LLM --> CIT[Citation / Grounding<br/>Validation Layer]
+    CIT --> ANS[FINAL ANSWER<br/>answer + [Page X, Section Y]]
+
+    EVID -- "max_similarity < threshold" --> INSF[No-evidence response]
+    LLM -- "API failure / rate limit" --> EVLF[Evidence-first response]
+    CIT -- "unsupported claims" --> LOW[Low-confidence warning]
+    VDB -- "unavailable" --> MEM[(In-memory fallback index)]
+    EMB -- "unavailable" --> BMONLY[BM25-only fallback]
