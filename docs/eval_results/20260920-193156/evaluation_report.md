@@ -13,8 +13,8 @@
 - Page accuracy: **1.0000**
 - Cited-evidence recall (gold chunks actually cited): **0.8944**
 - Cited-evidence precision (gold share of cited chunks): **0.3067**
-- Abstention (out-of-knowledge): **4 / 4** correct (100.00%); exact abstention sentence used in 100.00%
-- Average latency: **7.7 ms**
+- Abstention (out-of-knowledge): **2 / 4** correct (50.00%); exact abstention sentence used in 50.00%
+- Average latency: **8.2 ms**
 - Total tokens: **36031**
 - Estimated LLM cost: **$0.000000**
 - Generation provider: **offline-extractive** (offline-extractive)
@@ -1189,7 +1189,7 @@ Evidence:
 ## Abstention (out-of-knowledge) cases
 | id | reason | abstained | exact sentence | correct | warning |
 |---|---|---|---|---|---|
-| ABS-1 | out-of-knowledge | True | True | True |  |
-| ABS-2 | unrelated-topic | True | True | True |  |
-| ABS-3 | unrelated-topic | True | True | True |  |
-| ABS-4 | out-of-knowledge | True | True | True |  |
+| ABS-1 | out-of-knowledge | True | True | True | provider returned the abstention sentence (fail closed). [provider-abstained] |
+| ABS-2 | unrelated-topic | False | False | False |  |
+| ABS-3 | unrelated-topic | True | True | True | provider returned the abstention sentence (fail closed). [provider-abstained] |
+| ABS-4 | out-of-knowledge | False | False | False |  |

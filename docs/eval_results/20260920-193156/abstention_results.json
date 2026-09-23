@@ -1,0 +1,42 @@
+[
+  {
+    "id": "ABS-1",
+    "question": "What is the capital of France?",
+    "reason": "out-of-knowledge",
+    "abstained": true,
+    "exact_abstention_string": true,
+    "correct": true,
+    "warning": "provider returned the abstention sentence (fail closed). [provider-abstained]",
+    "answer_excerpt": "I could not find sufficient evidence for this answer in the provided document."
+  },
+  {
+    "id": "ABS-2",
+    "question": "What was Microsoft's total revenue in the fiscal year 2025?",
+    "reason": "unrelated-topic",
+    "abstained": false,
+    "exact_abstention_string": false,
+    "correct": false,
+    "warning": null,
+    "answer_excerpt": "According to the paper:\n- The Human-as-a-Judge took the three evaluators a self-reported total of 86.5 hours. [Page 11, Section Cost Analysis]\n- With a 15 USD m"
+  },
+  {
+    "id": "ABS-3",
+    "question": "Who wrote the novel The Great Gatsby and in which year was it published?",
+    "reason": "unrelated-topic",
+    "abstained": true,
+    "exact_abstention_string": true,
+    "correct": true,
+    "warning": "provider returned the abstention sentence (fail closed). [provider-abstained]",
+    "answer_excerpt": "I could not find sufficient evidence for this answer in the provided document."
+  },
+  {
+    "id": "ABS-4",
+    "question": "What is the recommended daily intake of vitamin C according to WHO?",
+    "reason": "out-of-knowledge",
+    "abstained": false,
+    "exact_abstention_string": false,
+    "correct": false,
+    "warning": null,
+    "answer_excerpt": "According to the paper:\n- First, like in\nthis work, introduce a debate round after each judgment,\nwhere individuals present evidence and either persuade\nothers "
+  }
+]

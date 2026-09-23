@@ -1,0 +1,1151 @@
+{
+  "summary": {
+    "n_questions": 15,
+    "passed": 2,
+    "pass_rate": 0.1333,
+    "recall_at_6": 0.8944,
+    "precision_at_6": 0.2556,
+    "mrr": 0.7989,
+    "ndcg_at_6": 0.7081,
+    "avg_numeric_recall": 0.2,
+    "avg_completeness": 0.1167,
+    "citation_accuracy": 0.1333,
+    "faithfulness_rate": 1.0,
+    "page_accuracy": 0.1333,
+    "cited_recall": 0.0833,
+    "cited_precision": 0.0267,
+    "abstention": {
+      "n": 4,
+      "correct": 4,
+      "abstain_correctness": 1.0,
+      "exact_string_rate": 1.0
+    },
+    "total_latency_ms": 121.9,
+    "avg_latency_ms": 8.1,
+    "total_tokens": 36031,
+    "total_est_cost_usd": 0.0,
+    "provider": "offline-extractive",
+    "llm_model": "offline-extractive"
+  },
+  "results": [
+    {
+      "id": 4,
+      "question": "What is the DevAI dataset, and how many tasks, requirements, and preferences does it contain?",
+      "category": "definition",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.5877
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "55": false,
+          "365": false,
+          "125": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 6.8,
+        "prompt_tokens": 1502,
+        "completion_tokens": 889,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 5,
+      "question": "What percentage of evaluation time and cost does Agent-as-a-Judge save compared to using three human experts?",
+      "category": "comparison",
+      "pass": true,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 0.25,
+        "ndcg_at_k": 0.579
+      },
+      "retrieval_final": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 0.25,
+        "ndcg_at_k": 0.6312
+      },
+      "generation": {
+        "numeric_correctness": {
+          "97.72": true,
+          "97.64": true
+        },
+        "numeric_recall": 1.0,
+        "citation_correctness": {
+          "has_citation": true,
+          "citation_page_matches_evidence": true
+        },
+        "faithful": true,
+        "completeness": 1.0,
+        "page_correct": true,
+        "evidence_sufficient": true,
+        "cited": {
+          "cited_recall": 1.0,
+          "cited_precision": 0.2
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 11.6,
+        "prompt_tokens": 2242,
+        "completion_tokens": 449,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [
+        {
+          "chunk_id": "p011-0045",
+          "page": 11,
+          "section": "Cost Analysis",
+          "chunk_type": "cost-analysis",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p006-0023",
+          "page": 6,
+          "section": "Human-as-a-Judge: Manual Evaluation on DevAI",
+          "chunk_type": "table",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p010-0041",
+          "page": 10,
+          "section": "Alignment Rate",
+          "chunk_type": "result",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p003-0008",
+          "page": 3,
+          "section": "Goals",
+          "chunk_type": "definition",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p009-0036",
+          "page": 9,
+          "section": "Proof-of-Concept",
+          "chunk_type": "table",
+          "hybrid_score": 1.0
+        }
+      ],
+      "claims": [
+        {
+          "text": "In addition, considering the evaluation cost, Agent-as-a-Judge saves 97.72% of the time and 97.64% of the",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 12,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "cost compared to involving three human experts.",
+          "page": 3,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 6,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "We release the DevAI dataset, which consists of 55 comprehensive AI development tasks with accompanying",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 13,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "tags, individual hierarchical requirements, and individual preferences.",
+          "page": 3,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 5,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "• We benchmark three top open-source code generation agentic frameworks in DevAI, providing a more",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 13,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "comprehensive analysis than previous evaluations of them.",
+          "page": 3,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 6,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "• We introduce the general Agent-as-a-Judge concept, allowing agentic systems a fair and rich evaluation",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 13,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "without the traditional costs associated with human involvement.",
+          "page": 3,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 7,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "• We demonstrate that an Agent-as-a-Judge outperforms an LLM-as-a-Judge and performs comparably to",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 10,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "human evaluators in our proof-of-concept.",
+          "page": 3,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 5,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "Tips: We provide a paper outline and the experimental design in Appendices A and B.",
+          "page": 3,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 8,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "The Human-as-a-Judge took the three evaluators a self-reported total of 86.5 hours.",
+          "page": 11,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 11,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "With a 15 USD minimum",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 4,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "wage (assuming this would buy a subject expert in AI), a full evaluation under DevAI would cost around",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 14,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "1297.50 USD.",
+          "page": 11,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 3,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "In comparison, Agent-as-a-Judge cost only 30.58 USD in API calls and took only 118.43",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 14,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "minutes—2.29% of the cost and 2.36% of the time of Human-as-a-Judge.",
+          "page": 11,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 8,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "LLM-as-a-Judge was faster at 10.99",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 7,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "minutes, but due to the absence of intelligent context selection by the Agent-as-a-Judge’s modules, it still cost",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 15,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "29.63 USD.",
+          "page": 11,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 3,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        }
+      ],
+      "answer": "According to the paper:\n- In addition, considering the evaluation cost, Agent-as-a-Judge saves 97.72% of the time and 97.64% of the\ncost compared to involving three human experts. [Page 3, Section Goals]\n- In summary, the principal contributions of this work are:\n• We release the DevAI dataset, which consists of 55 comprehensive AI development tasks with accompanying\ntags, individual hierarchical requirements, and individual preferences. [Page 3, Section Goals]\n- • We benchmark three top open-source code generation agentic frameworks in DevAI, providing a more\ncomprehensive analysis than previous evaluations of them. [Page 3, Section Goals]\n- • We introduce the general Agent-as-a-Judge concept, allowing agentic systems a fair and rich evaluation\nwithout the traditional costs associated with human involvement. [Page 3, Section Goals]\n- • We demonstrate that an Agent-as-a-Judge outperforms an LLM-as-a-Judge and performs comparably to\nhuman evaluators in our proof-of-concept. [Page 3, Section Goals]\n- Tips: We provide a paper outline and the experimental design in Appendices A and B. [Page 3, Section Goals]\n- The Human-as-a-Judge took the three evaluators a self-reported total of 86.5 hours. [Page 11, Section Cost Analysis]\n- With a 15 USD minimum\nwage (assuming this would buy a subject expert in AI), a full evaluation under DevAI would cost around\n1297.50 USD. [Page 11, Section Cost Analysis]\n- In comparison, Agent-as-a-Judge cost only 30.58 USD in API calls and took only 118.43\nminutes—2.29% of the cost and 2.36% of the time of Human-as-a-Judge. [Page 11, Section Cost Analysis]\n- LLM-as-a-Judge was faster at 10.99\nminutes, but due to the absence of intelligent context selection by the Agent-as-a-Judge’s modules, it still cost\n29.63 USD. [Page 11, Section Cost Analysis]"
+    },
+    {
+      "id": 6,
+      "question": "According to Section 4.4 (Cost Analysis), how much did Agent-as-a-Judge cost and how long did it take, compared to Human-as-a-Judge?",
+      "category": "comparison",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "30.58": false,
+          "118.43": false,
+          "1297.50": false,
+          "86.5": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 9.3,
+        "prompt_tokens": 1726,
+        "completion_tokens": 1033,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 7,
+      "question": "Which three open-source agentic frameworks were benchmarked on DevAI?",
+      "category": "methodology",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 0.1667,
+        "precision_at_k": 0.1667,
+        "mrr": 0.2,
+        "ndcg_at_k": 0.2684
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "MetaGPT": false,
+          "GPT-Pilot": false,
+          "OpenHands": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 3.4,
+        "prompt_tokens": 1120,
+        "completion_tokens": 649,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 8,
+      "question": "What is the average cost and average time for OpenHands?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.3333,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.9391
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "6.38": false,
+          "362.41": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 10.5,
+        "prompt_tokens": 1953,
+        "completion_tokens": 777,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 9,
+      "question": "Which system is the most cost-efficient and which is the most expensive?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.5,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.8674
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "1.19": false,
+          "6.38": false,
+          "MetaGPT": false,
+          "OpenHands": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 10.3,
+        "prompt_tokens": 2019,
+        "completion_tokens": 701,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 10,
+      "question": "What was GPT-Pilot's \"Requirements Met (Independent)\" percentage under Human-as-a-Judge?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.3333,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.9216
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "44.80": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 8.9,
+        "prompt_tokens": 2217,
+        "completion_tokens": 467,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 11,
+      "question": "What was MetaGPT's Task Solve Rate?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.5,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.9016
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "0.0": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 11.9,
+        "prompt_tokens": 2069,
+        "completion_tokens": 921,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 12,
+      "question": "In the black-box setting, what Alignment Rate did Agent-as-a-Judge vs. LLM-as-a-Judge achieve when evaluating OpenHands?",
+      "category": "comparison",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.3333,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.9593
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "90.44": false,
+          "60.38": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 9.8,
+        "prompt_tokens": 1830,
+        "completion_tokens": 1039,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 13,
+      "question": "What alignment rate does Agent-as-a-Judge achieve using only the \"ask\" component, and after adding \"graph,\" \"read,\" and \"locate\"?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.3333,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.7979
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "65.03": false,
+          "75.95": false,
+          "82.24": false,
+          "90.44": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 5.9,
+        "prompt_tokens": 1711,
+        "completion_tokens": 453,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 14,
+      "question": "Which search algorithm (BM25, Sentence-BERT, Fuzzy Search, or no search module) gave the best alignment rate?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.8481
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "90.44": false,
+          "86.06": false,
+          "87.70": false,
+          "85.52": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 7.9,
+        "prompt_tokens": 1608,
+        "completion_tokens": 428,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 15,
+      "question": "Which two model architectures are mentioned most frequently in the DevAI user queries?",
+      "category": "methodology",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.4646
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "SVM": false,
+          "LSTM": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 4.8,
+        "prompt_tokens": 1034,
+        "completion_tokens": 498,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 16,
+      "question": "What is requirement R1 in the \"Devin AI Software Engineer Plants Secret Messages in Images\" task?",
+      "category": "definition",
+      "pass": true,
+      "retrieval_raw": {
+        "recall_at_k": 0.25,
+        "precision_at_k": 0.1667,
+        "mrr": 0.3333,
+        "ndcg_at_k": 0.2439
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.25,
+        "precision_at_k": 0.1667,
+        "mrr": 0.3333,
+        "ndcg_at_k": 0.2596
+      },
+      "generation": {
+        "numeric_correctness": {
+          "1080p": true,
+          "results/": true
+        },
+        "numeric_recall": 1.0,
+        "citation_correctness": {
+          "has_citation": true,
+          "citation_page_matches_evidence": true
+        },
+        "faithful": true,
+        "completeness": 0.75,
+        "page_correct": true,
+        "evidence_sufficient": true,
+        "cited": {
+          "cited_recall": 0.25,
+          "cited_precision": 0.2
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 6.2,
+        "prompt_tokens": 1875,
+        "completion_tokens": 249,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [
+        {
+          "chunk_id": "p005-0018",
+          "page": 5,
+          "section": "■P1",
+          "chunk_type": "narrative",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p024-0091",
+          "page": 24,
+          "section": "Auxiliary Information",
+          "chunk_type": "result",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p005-0015",
+          "page": 5,
+          "section": "■R1",
+          "chunk_type": "result",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p025-0092",
+          "page": 25,
+          "section": "A Json Format of Our Sample",
+          "chunk_type": "result",
+          "hybrid_score": 1.0
+        },
+        {
+          "chunk_id": "p031-0116",
+          "page": 31,
+          "section": "Human Evaluation Procedure",
+          "chunk_type": "narrative",
+          "hybrid_score": 1.0
+        }
+      ],
+      "claims": [
+        {
+          "text": "Criteria: Ensure the generated images are of 1080p resolution and saved in results/.",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 8,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "Criteria: After reviewing the blog post, ControlNet should successfully run on Modal to produce",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 12,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "images with hidden messages for FUTURE.",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 5,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "Figure 3 A task example in DevAI.",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 4,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "This task is adapted from a real-world demo given at https://www.cognitio",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 12,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "n.ai/blog/introducing-devin.",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 4,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "As this example shows, task requirements in DevAI are structured as a Directed",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 9,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "Acyclic Graph (DAG), with nodes representing individual requirements and directed edges showing dependencies.",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 12,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "More examples are in Appendix G.",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 3,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "will refer to as “AI developers”): MetaGPT (Hong et al., 2024b), GPT-Pilot (Pythagora.io, 2023), and",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 15,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "OpenHands (Wang et al., 2024d)—all selected for their strong community acceptance (each having over 30,000",
+          "page": null,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 16,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        },
+        {
+          "text": "stars on GitHub).",
+          "page": 5,
+          "supported": true,
+          "page_matched": true,
+          "numeric_matched": true,
+          "token_overlap": 3,
+          "verdict": "supported",
+          "reason": "supported by cited evidence"
+        }
+      ],
+      "answer": "According to the paper:\n- Criteria: Ensure the generated images are of 1080p resolution and saved in results/. [Page 5, Section ■R1]\n- Criteria: After reviewing the blog post, ControlNet should successfully run on Modal to produce\nimages with hidden messages for FUTURE. [Page 5, Section ■P1]\n- Figure 3 A task example in DevAI. [Page 5, Section ■P1]\n- This task is adapted from a real-world demo given at https://www.cognitio\nn.ai/blog/introducing-devin. [Page 5, Section ■P1]\n- As this example shows, task requirements in DevAI are structured as a Directed\nAcyclic Graph (DAG), with nodes representing individual requirements and directed edges showing dependencies. [Page 5, Section ■P1]\n- More examples are in Appendix G. [Page 5, Section ■P1]\n- will refer to as “AI developers”): MetaGPT (Hong et al., 2024b), GPT-Pilot (Pythagora.io, 2023), and\nOpenHands (Wang et al., 2024d)—all selected for their strong community acceptance (each having over 30,000\nstars on GitHub). [Page 5, Section ■P1]"
+    },
+    {
+      "id": 17,
+      "question": "Which of the three human evaluators (231a, 38bb, cn9o) made the most errors when judging GPT-Pilot, and what was the error rate?",
+      "category": "numerical_lookup",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.8554
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {
+          "cn9o": false,
+          "23.77": false
+        },
+        "numeric_recall": 0.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 11.0,
+        "prompt_tokens": 2507,
+        "completion_tokens": 672,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    },
+    {
+      "id": 18,
+      "question": "In the diagram comparing LLM-as-a-Judge, Agent-as-a-Judge, and Human-as-a-Judge, what key drawback is highlighted for Human-as-a-Judge?",
+      "category": "multi_hop",
+      "pass": false,
+      "retrieval_raw": {
+        "recall_at_k": 1.0,
+        "precision_at_k": 0.1667,
+        "mrr": 0.2,
+        "ndcg_at_k": 0.3869
+      },
+      "retrieval_final": {
+        "recall_at_k": 0.0,
+        "precision_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0
+      },
+      "generation": {
+        "numeric_correctness": {},
+        "numeric_recall": 1.0,
+        "citation_correctness": {
+          "has_citation": false,
+          "citation_page_matches_evidence": false
+        },
+        "faithful": true,
+        "completeness": 0.0,
+        "page_correct": false,
+        "evidence_sufficient": false,
+        "cited": {
+          "cited_recall": 0.0,
+          "cited_precision": 0.0
+        }
+      },
+      "system": {
+        "provider": "offline-extractive",
+        "model": "offline-extractive",
+        "latency_ms": 3.6,
+        "prompt_tokens": 1135,
+        "completion_tokens": 258,
+        "est_cost_usd": 0.0
+      },
+      "evidence": [],
+      "claims": [],
+      "answer": "I could not find sufficient evidence for this answer in the provided document."
+    }
+  ]
+}

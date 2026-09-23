@@ -1,7 +1,7 @@
 flowchart TD
     A[User Query] --> B[Query Understanding<br/>factual / numerical / table / comparison / multi-hop]
     B --> C[Dense + Sparse Retrieval<br/>FAISS cosine + BM25]
-    C --> D[Hybrid Fusion<br/>weighted (alpha=0.7) or RRF]
+    C --> D[Hybrid Fusion<br/>weighted (alpha=0.5) or RRF]
     D --> E[Optional Reranking<br/>cross-encoder]
     E --> F[Evidence Selection<br/>top-k, table-aware for numeric questions]
     F --> G[Grounded Context Construction]
