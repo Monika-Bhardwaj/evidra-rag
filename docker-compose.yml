@@ -1,28 +1,38 @@
+# EVIDRA: API + UI, non-root, named volume for data/index, readiness healthcheck.
+# The api service loads the pipeline before it reports healthy (/api/ready).
 services:
   api:
     build: .
-    command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["api"]
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data
+      - evidra_data:/app/data
+      - evidra_index:/app/index
     environment:
-      - LLM_PROVIDER=${LLM_PROVIDER:-auto}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - PYTHONPATH=/app
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/ready"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
   app:
     build: .
+    command: ["app"]
     ports:
       - "8501:8501"
     volumes:
-      - ./data:/app/data
+      - evidra_data:/app/data
+      - evidra_index:/app/index
     environment:
-      - LLM_PROVIDER=${LLM_PROVIDER:-auto}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - PYTHONPATH=/app
+      - EVIDRA_API_URL=http://api:8000
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+
+volumes:
+  evidra_data:
+  evidra_index:

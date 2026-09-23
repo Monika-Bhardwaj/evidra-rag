@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Optional
@@ -11,6 +12,33 @@ from src.config import Settings, est_price_for_model
 from src.logging_utils import get_logger
 
 logger = get_logger(__name__)
+
+# Circuit breaker: after this many consecutive failures the provider stops
+# attempting calls for the cooldown window, so a degraded upstream cannot wedge
+# the request path. The offline extractive provider never trips the breaker.
+CIRCUIT_BREAKER_THRESHOLD = 3
+CIRCUIT_BREAKER_COOLDOWN_S = 30.0
+
+
+@dataclass
+class _CircuitState:
+    consecutive_failures: int = 0
+    opened_until: float = 0.0
+
+    def record_failure(self, now: float) -> bool:
+        """Increment failures; return True if the breaker has just opened."""
+        self.consecutive_failures += 1
+        if self.consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD:
+            self.opened_until = now + CIRCUIT_BREAKER_COOLDOWN_S
+            return True
+        return False
+
+    def is_open(self, now: float) -> bool:
+        return now < self.opened_until
+
+    def record_success(self) -> None:
+        self.consecutive_failures = 0
+        self.opened_until = 0.0
 
 
 @dataclass
@@ -30,7 +58,7 @@ def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-def _chat_completion_with_retry(client, messages, model, temperature, max_tokens):
+def _chat_completion_with_retry(client, messages, model, temperature, max_tokens, timeout=None):
     @tenacity.retry(
         wait=tenacity.wait_exponential(multiplier=1.0, max=60),
         stop=tenacity.stop_after_attempt(5),
@@ -46,6 +74,7 @@ def _chat_completion_with_retry(client, messages, model, temperature, max_tokens
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            timeout=timeout,
         )
 
     return _call()
@@ -88,20 +117,44 @@ class OpenAIProvider(LLMProvider):
         base_url: str = "",
         temperature: float = 0.0,
         max_tokens: int = 512,
+        timeout_seconds: Optional[float] = None,
     ) -> None:
         from openai import OpenAI
 
         super().__init__(model, temperature, max_tokens)
+        self.timeout_seconds = timeout_seconds
+        self._breaker = _CircuitState()
         self._client = OpenAI(api_key=api_key, base_url=base_url or None)
 
     def _chat(self, messages: List[Dict[str, str]]) -> LLMResult:
         prompt_tokens = sum(estimate_tokens(m.get("content", "")) for m in messages)
+        now = time.time()
+        if self._breaker.is_open(now):
+            return LLMResult(
+                text="",
+                provider=self.provider_name,
+                model=self.model,
+                prompt_tokens=prompt_tokens,
+                failed=True,
+                error=f"circuit open (cooldown until {self._breaker.opened_until:.0f})",
+            )
         try:
             response = _chat_completion_with_retry(
-                self._client, messages, self.model, self.temperature, self.max_tokens
+                self._client,
+                messages,
+                self.model,
+                self.temperature,
+                self.max_tokens,
+                timeout=self.timeout_seconds,
             )
         except Exception as exc:
             logger.error("LLM generation failed: %s", exc)
+            if self._breaker.record_failure(time.time()):
+                logger.warning(
+                    "LLM circuit breaker opened for %.0fs after %d consecutive failures.",
+                    CIRCUIT_BREAKER_COOLDOWN_S,
+                    self._breaker.consecutive_failures,
+                )
             return LLMResult(
                 text="",
                 provider=self.provider_name,
@@ -110,6 +163,7 @@ class OpenAIProvider(LLMProvider):
                 failed=True,
                 error=str(exc),
             )
+        self._breaker.record_success()
         text = response.choices[0].message.content or ""
         usage = getattr(response, "usage", None)
         completion_tokens = usage.completion_tokens if usage else estimate_tokens(text)
@@ -127,7 +181,12 @@ class GroqProvider(OpenAIProvider):
     provider_name = "groq"
 
     def __init__(
-        self, api_key: str, model: str, temperature: float = 0.0, max_tokens: int = 512
+        self,
+        api_key: str,
+        model: str,
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+        timeout_seconds: Optional[float] = None,
     ) -> None:
         super().__init__(
             api_key=api_key,
@@ -135,6 +194,7 @@ class GroqProvider(OpenAIProvider):
             base_url="https://api.groq.com/openai/v1",
             temperature=temperature,
             max_tokens=max_tokens,
+            timeout_seconds=timeout_seconds,
         )
 
 
@@ -142,7 +202,12 @@ class GeminiProvider(OpenAIProvider):
     provider_name = "gemini"
 
     def __init__(
-        self, api_key: str, model: str, temperature: float = 0.0, max_tokens: int = 512
+        self,
+        api_key: str,
+        model: str,
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+        timeout_seconds: Optional[float] = None,
     ) -> None:
         super().__init__(
             api_key=api_key,
@@ -150,6 +215,7 @@ class GeminiProvider(OpenAIProvider):
             base_url="https://generativelanguage.googleapis.com/v1beta/openai",
             temperature=temperature,
             max_tokens=max_tokens,
+            timeout_seconds=timeout_seconds,
         )
 
 
@@ -309,6 +375,7 @@ class LocalExtractiveProvider(LLMProvider):
 
 def build_llm(settings: Settings) -> LLMProvider:
     provider = settings.llm_provider
+    timeout = settings.llm_timeout_seconds
     if provider == "openai" and settings.openai_api_key:
         return OpenAIProvider(
             api_key=settings.openai_api_key,
@@ -316,6 +383,7 @@ def build_llm(settings: Settings) -> LLMProvider:
             base_url=settings.openai_base_url,
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
+            timeout_seconds=timeout,
         )
     if provider == "groq" and settings.groq_api_key:
         return GroqProvider(
@@ -323,6 +391,7 @@ def build_llm(settings: Settings) -> LLMProvider:
             model=settings.groq_model,
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
+            timeout_seconds=timeout,
         )
     if provider == "gemini" and settings.gemini_api_key:
         return GeminiProvider(
@@ -330,6 +399,7 @@ def build_llm(settings: Settings) -> LLMProvider:
             model=settings.gemini_model,
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
+            timeout_seconds=timeout,
         )
     if provider == "auto":
         if settings.openai_api_key:
@@ -339,6 +409,7 @@ def build_llm(settings: Settings) -> LLMProvider:
                 base_url=settings.openai_base_url,
                 temperature=settings.llm_temperature,
                 max_tokens=settings.llm_max_tokens,
+                timeout_seconds=timeout,
             )
         if settings.gemini_api_key:
             return GeminiProvider(
@@ -346,6 +417,7 @@ def build_llm(settings: Settings) -> LLMProvider:
                 model=settings.gemini_model,
                 temperature=settings.llm_temperature,
                 max_tokens=settings.llm_max_tokens,
+                timeout_seconds=timeout,
             )
         if settings.groq_api_key:
             return GroqProvider(
@@ -353,6 +425,7 @@ def build_llm(settings: Settings) -> LLMProvider:
                 model=settings.groq_model,
                 temperature=settings.llm_temperature,
                 max_tokens=settings.llm_max_tokens,
+                timeout_seconds=timeout,
             )
     logger.info(
         "No LLM API key configured; using offline extractive generation (provider=%s).", provider

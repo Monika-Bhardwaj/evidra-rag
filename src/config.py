@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     groq_model: str = "llama-3.3-70b-versatile"
     llm_temperature: float = 0.0
     llm_max_tokens: int = 512
+    llm_timeout_seconds: float = 30.0
 
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     embedding_device: str = "cpu"
