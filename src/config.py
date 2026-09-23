@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -41,7 +42,6 @@ class Settings(BaseSettings):
     hybrid_alpha: float = 0.5
     hybrid_method: Literal["weighted", "rrf"] = "weighted"
     min_similarity: float = 0.35
-    knowledge_boundary_min_sim: float = 0.30
     use_query_expansion: bool = True
     use_query_routing: bool = True
     context_max_tokens: int = 4000
@@ -151,6 +151,31 @@ def est_price_for_model(model: str) -> tuple[float, float]:
         if entry["pattern"] in model.lower():
             return entry["input"], entry["output"]
     return PRICING_PER_1M_TOKENS[-1]["input"], PRICING_PER_1M_TOKENS[-1]["output"]
+
+
+def retrieval_config_fingerprint(settings: Settings) -> str:
+    """Hash of every setting that affects retrieval results or sufficiency.
+
+    Stored retrieval-cache entries are only valid while the retrieval stack and the
+    sufficiency gate are configured the same way. Omitting thresholds here caused
+    stale entries from an earlier config to be served (ABS-6 regression, 2026-09-23).
+    The index signature is handled separately in the pipeline (chunk-set + embedder).
+    """
+    config_fields = (
+        settings.hybrid_alpha,
+        settings.hybrid_method,
+        settings.dense_top_k,
+        settings.bm25_top_k,
+        settings.rerank_top_k,
+        settings.final_top_k,
+        settings.min_similarity,
+        settings.use_query_expansion,
+        settings.use_query_routing,
+        settings.use_reranker,
+        settings.reranker_kind,
+        settings.embedding_model,
+    )
+    return hashlib.sha256(repr(config_fields).encode()).hexdigest()[:12]
 
 
 @lru_cache(maxsize=1)

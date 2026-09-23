@@ -1,28 +1,28 @@
 # Evaluation Report — Agent-as-a-Judge RAG
 
 - Questions evaluated: **18**
-- Passed (all key values + page + sufficient evidence): **18 / 18** (100.00%)
-- Retrieval Recall@6: **0.8148**
-- Retrieval Precision@6: **0.2315**
-- MRR: **0.7398**
-- nDCG@6: **0.6949**
-- Numeric recall (key values found in answer): **1.0000**
+- Passed (all key values + page + sufficient evidence): **17 / 18** (94.44%)
+- Retrieval Recall@6: **0.7593**
+- Retrieval Precision@6: **0.2222**
+- MRR: **0.6843**
+- nDCG@6: **0.6499**
+- Numeric recall (key values found in answer): **0.9444**
 - Completeness (required phrases in answer): **0.8981**
 - Citation accuracy: **1.0000**
 - Faithfulness (claims supported by evidence): **1.0000**
-- Page accuracy: **1.0000**
-- Cited-evidence recall (gold chunks actually cited): **0.8148**
-- Cited-evidence precision (gold share of cited chunks): **0.2778**
-- Abstention (out-of-knowledge): **6 / 6** correct (100.00%); exact abstention sentence used in 100.00%
-- Average latency: **99.6 ms**
-- Total tokens: **44897**
+- Page accuracy: **0.9444**
+- Cited-evidence recall (gold chunks actually cited): **0.7593**
+- Cited-evidence precision (gold share of cited chunks): **0.2667**
+- Abstention (out-of-knowledge): **5 / 6** correct (83.33%); exact abstention sentence used in 83.33%
+- Average latency: **22.8 ms**
+- Total tokens: **44311**
 - Estimated LLM cost: **$0.000000**
 - Generation provider: **offline-extractive** (offline-extractive)
 
 | # | Question | Category | R@6 | nDCG@6 | Num | Cit | Faith | Page | Pass |
 |---|----------|----------|-----|--------|-----|-----|-------|------|------|
 | 1 | What framework does the paper introduce, and how is it described relat | methodology | 0.250 | 0.682 | 1.000 | Y | Y | Y | YES |
-| 2 | According to the abstract, existing evaluation techniques are describe | factual_lookup | 1.000 | 0.810 | 1.000 | Y | Y | Y | YES |
+| 2 | Where is the DevAI dataset hosted according to the paper's metadata? | factual_lookup | 0.000 | 0.000 | 0.000 | Y | Y | N | no |
 | 3 | According to the introduction, what percentage alignment with the cons | numerical_lookup | 0.000 | 0.395 | 1.000 | Y | Y | Y | YES |
 | 4 | What is the DevAI dataset, and how many tasks, requirements, and prefe | definition | 1.000 | 0.588 | 1.000 | Y | Y | Y | YES |
 | 5 | What percentage of evaluation time and cost does Agent-as-a-Judge save | comparison | 1.000 | 0.579 | 1.000 | Y | Y | Y | YES |
@@ -73,39 +73,44 @@ Evidence:
 - `p010-0041` · page 10 · section 'Alignment Rate' · type result
 - `p018-0067` · page 18 · section '■Step 7: Comparing AI Judge Systems (Experiment Level 3)' · type narrative
 
-### Q2 — According to the abstract, existing evaluation techniques are described as inadequate for what type of systems?
+### Q2 — Where is the DevAI dataset hosted according to the paper's metadata?
 **Answer:** According to the paper:
-- After obtaining the baseline executions and conducting basic statistical analysis,
-we have three expert human evaluators (referred to here by their anonymous names: 231a, 38bb, and cn90)
-review the outputs of AI developer baselines to assess whether each requirement was satisfied. [Page 7, Section Human Evaluation Setup]
-- We have two
-rounds of human evaluations. [Page 7, Section Human Evaluation Setup]
-- To capture the bias inherent in typical human evaluation (this is desirable to
-capture here as it represents a likely scenario in deployment), in the first round, our evaluators first discussed
-the basic standards but were given minimal instructions. [Page 7, Section Human Evaluation Setup]
-- The templates the evaluators were given for the
-evaluation and their self-reported post-hoc descriptions of how they resolved ambiguities are reported in
-Figure 12 in Appendix H. [Page 7, Section Human Evaluation Setup]
-- After the initial round of human evaluations (which totaled an estimated total of 58 human hours), we asked
-our evaluators to discuss and reach a consensus on their assessments (which took an estimated total of 28.5
-additional human hours). [Page 7, Section Human Evaluation Setup]
-- This consensus, achieved after long sessions of debate, was used as the final human
-evaluation result for each method. [Page 7, Section Human Evaluation Setup]
-- I didn’t consider a dummy data path to be correct (GPT-Pilot used a lot of these). [Page 31, Section Human Evaluation Procedure]
-- To determine if something was executed correctly, I skimmed the end of the logs (e.g., trajectory) for any obvious signs of an error. [Page 31, Section Human Evaluation Procedure]
-- If there wasn’t any, I said it was correctly executed. [Page 31, Section Human Evaluation Procedure]
-- I ignored prerequisites while evaluating and did not execute anything, instead just eyeballing the code for correctness. [Page 31, Section Human Evaluation Procedure]
-- I was lenient in what I considered to be sufficient in terms of the more vague requirements (e.g., if the preprocessing had to include scaling and rotation, just those two would be sufficient to consider it done). [Page 31, Section Human Evaluation Procedure]
-- Figure 12 Each evaluator was given a full description of each task and the associated requirements and preferences in markdown format. [Page 31, Section Human Evaluation Procedure]
-- They were then asked, for each workspace and trajectory generated by each of the agents on each of the task, whether (1) the agent successfully finished its execution cycle and (2) which of the requirements were satisfied. [Page 31, Section Human Evaluation Procedure]
-- After the evaluation was complete, the evaluators were asked to self-report the nuances of their evaluation. [Page 31, Section Human Evaluation Procedure]
+- Motivated by the ideas outlined above, we propose the DevAI dataset. [Page 4, Section The DevAI Dataset]
+- DevAI consists of a curated set of 55
+tasks, each defined by (1) a plain text user query that describes an AI development task; (2) a set of plain
+text requirements (for a total of 365 requirements), each with a set of dependencies connecting them to other
+requirements; and (3) a set of preferences (for a total of 125 preferences) which represent softer requirements. [Page 4, Section The DevAI Dataset]
+- DevAI is structured so that an agentic system starts by receiving a user query to begin development. [Page 4, Section The DevAI Dataset]
+- The
+system is then evaluated on how well it meets the requirements, with preferences serving as optional, softer
+criteria. [Page 4, Section The DevAI Dataset]
+- An example of one of the DevAI tasks can be seen in Figure 3. [Page 4, Section The DevAI Dataset]
+- The tasks in DevAI are relatively small-scale but cover commonly used key development techniques. [Page 4, Section The DevAI Dataset]
+- As shown
+in Figure 2, our tasks are tagged and cover a variety of key areas in AI: supervised learning, reinforcement
+learning, computer vision, natural language processing, generative models, and others. [Page 4, Section The DevAI Dataset]
+- Each of the tasks
+is a real-world problem that could be given to a research engineer, while simultaneously being relatively
+inexpensive computationally to run so as to reduce the cost of evaluating a method on this benchmark. [Page 4, Section The DevAI Dataset]
+- Details
+of the sample collection and human labeling process for DevAI are provided in Appendix E. [Page 4, Section The DevAI Dataset]
+- The requirements belonging to each task represent a milestone in the comprehensive development process and
+are arranged as a directed acyclic graph (similar to the work by He et al. [Page 4, Section The DevAI Dataset]
+- (2021)), with requirements such
+as visualizing results depending on correct data loading and modeling. [Page 4, Section The DevAI Dataset]
+- This allows for more comprehensive
+non-sparse feedback than a binary success metric. [Page 4, Section The DevAI Dataset]
+- Description: To address the lack of suitable datasets for evaluating agentic systems in automated
+AI development, we introduce DevAI, a new dataset consisting of 55 realistic AI code generation
+tasks. [Page 18, Section ■Step 2: Dataset Creation]
+- This also serves as a testbed for the Agent-as-a-Judge proof-of-concept. [Page 18, Section ■Step 2: Dataset Creation]
 
 Evidence:
-- `p001-0002` · page 1 · section 'Yangyang Shi1, Vikas Chandra1, J¨urgen Schmidhuber2' · type definition
-- `p001-0001` · page 1 · section 'Introduction' · type narrative
-- `p012-0053` · page 12 · section 'Conclusion' · type definition
-- `p007-0027` · page 7 · section 'Human Evaluation Setup' · type narrative
-- `p031-0117` · page 31 · section 'Human Evaluation Procedure' · type narrative
+- `p004-0011` · page 4 · section 'Preliminary Benchmark' · type narrative
+- `p023-0087` · page 23 · section 'Refine the dataset' · type narrative
+- `p018-0070` · page 18 · section '■Step 2: Dataset Creation' · type definition
+- `p004-0010` · page 4 · section 'Preliminary Benchmark' · type result
+- `p004-0012` · page 4 · section 'The DevAI Dataset' · type narrative
 
 ### Q3 — According to the introduction, what percentage alignment with the consensus of human judges did Agent-as-a-Judge and LLM-as-a-Judge each achieve?
 **Answer:** According to the paper:
@@ -953,8 +958,10 @@ without Search Module
 90.44%
 hese results suggest that the performance issue is not due to BM2.5’s
 poor search accuracy. [Page 39, Section Search Algorithms in Search Module]
-- [REDACTED: embedded-instruction]
-In simpler workspaces, direct retrieval and
+- Instead, the workspaces generated in our
+DevAI tasks are too simple for the search component to have
+a significant impact. [Page 39, Section Search Algorithms in Search Module]
+- In simpler workspaces, direct retrieval and
 evaluation are sufficient. [Page 39, Section Search Algorithms in Search Module]
 - Even though Sentence-BERT performed
 better than the other methods, its alignment rate (87.70%) still falls
@@ -1110,21 +1117,21 @@ Evidence:
 - SUPPORTED `In code generation, the development of benchmarks has also lagged behind the rapid advance` page=2 overlap=12 (supported by cited evidence)
 - SUPPORTED `HumanEval (Chen et al., 2021), for example, focuses exclusively on algorithmic problems, w` page=2 overlap=14 (supported by cited evidence)
 
-### Q2 — According to the abstract, existing evaluation techniques are described as inadequate for what type of systems?
-- SUPPORTED `After obtaining the baseline executions and conducting basic statistical analysis, we have` page=7 overlap=33 (supported by cited evidence)
-- SUPPORTED `We have two rounds of human evaluations.` page=7 overlap=6 (supported by cited evidence)
-- SUPPORTED `To capture the bias inherent in typical human evaluation (this is desirable to capture her` page=7 overlap=26 (supported by cited evidence)
-- SUPPORTED `The templates the evaluators were given for the evaluation and their self-reported post-ho` page=7 overlap=17 (supported by cited evidence)
-- SUPPORTED `After the initial round of human evaluations (which totaled an estimated total of 58 human` page=7 overlap=24 (supported by cited evidence)
-- SUPPORTED `This consensus, achieved after long sessions of debate, was used as the final human evalua` page=7 overlap=15 (supported by cited evidence)
-- SUPPORTED `I didn’t consider a dummy data path to be correct (GPT-Pilot used a lot of these).` page=31 overlap=12 (supported by cited evidence)
-- SUPPORTED `To determine if something was executed correctly, I skimmed the end of the logs (e.g., tra` page=31 overlap=13 (supported by cited evidence)
-- SUPPORTED `If there wasn’t any, I said it was correctly executed.` page=31 overlap=8 (supported by cited evidence)
-- SUPPORTED `I ignored prerequisites while evaluating and did not execute anything, instead just eyebal` page=31 overlap=13 (supported by cited evidence)
-- SUPPORTED `I was lenient in what I considered to be sufficient in terms of the more vague requirement` page=31 overlap=22 (supported by cited evidence)
-- SUPPORTED `Figure 12 Each evaluator was given a full description of each task and the associated requ` page=31 overlap=13 (supported by cited evidence)
-- SUPPORTED `They were then asked, for each workspace and trajectory generated by each of the agents on` page=31 overlap=21 (supported by cited evidence)
-- SUPPORTED `After the evaluation was complete, the evaluators were asked to self-report the nuances of` page=31 overlap=9 (supported by cited evidence)
+### Q2 — Where is the DevAI dataset hosted according to the paper's metadata?
+- SUPPORTED `Motivated by the ideas outlined above, we propose the DevAI dataset.` page=4 overlap=9 (supported by cited evidence)
+- SUPPORTED `DevAI consists of a curated set of 55 tasks, each defined by (1) a plain text user query t` page=4 overlap=31 (supported by cited evidence)
+- SUPPORTED `DevAI is structured so that an agentic system starts by receiving a user query to begin de` page=4 overlap=13 (supported by cited evidence)
+- SUPPORTED `The system is then evaluated on how well it meets the requirements, with preferences servi` page=4 overlap=16 (supported by cited evidence)
+- SUPPORTED `An example of one of the DevAI tasks can be seen in Figure 3.` page=4 overlap=8 (supported by cited evidence)
+- SUPPORTED `The tasks in DevAI are relatively small-scale but cover commonly used key development tech` page=4 overlap=12 (supported by cited evidence)
+- SUPPORTED `As shown in Figure 2, our tasks are tagged and cover a variety of key areas in AI: supervi` page=4 overlap=22 (supported by cited evidence)
+- SUPPORTED `Each of the tasks is a real-world problem that could be given to a research engineer, whil` page=4 overlap=27 (supported by cited evidence)
+- SUPPORTED `Details of the sample collection and human labeling process for DevAI are provided in Appe` page=4 overlap=9 (supported by cited evidence)
+- SUPPORTED `The requirements belonging to each task represent a milestone in the comprehensive develop` page=4 overlap=20 (supported by cited evidence)
+- SUPPORTED `(2021)), with requirements such as visualizing results depending on correct data loading a` page=4 overlap=13 (supported by cited evidence)
+- SUPPORTED `This allows for more comprehensive non-sparse feedback than a binary success metric.` page=4 overlap=11 (supported by cited evidence)
+- SUPPORTED `Description: To address the lack of suitable datasets for evaluating agentic systems in au` page=18 overlap=22 (supported by cited evidence)
+- SUPPORTED `This also serves as a testbed for the Agent-as-a-Judge proof-of-concept.` page=18 overlap=9 (supported by cited evidence)
 
 ### Q3 — According to the introduction, what percentage alignment with the consensus of human judges did Agent-as-a-Judge and LLM-as-a-Judge each achieve?
 - SUPPORTED `The Alignment Rate reflects how closely the AI Judges’ evaluations align with human consen` page=10 overlap=16 (supported by cited evidence)
@@ -1311,7 +1318,8 @@ Evidence:
 - SUPPORTED `However, neither improved the performance of the Agent-as-a-Judge.` page=39 overlap=7 (supported by cited evidence)
 - SUPPORTED `Table 6 Comparisons on Search module with different engines.` page=39 overlap=8 (supported by cited evidence)
 - SUPPORTED `Search Method Alignment Rate BM2.5 86.06% Sentence-BERT 87.70% Fuzzy Search 85.52% without` page=39 overlap=28 (supported by cited evidence)
-- SUPPORTED `[REDACTED: embedded-instruction] In simpler workspaces, direct retrieval and evaluation ar` page=39 overlap=6 (supported by cited evidence)
+- SUPPORTED `Instead, the workspaces generated in our DevAI tasks are too simple for the search compone` page=39 overlap=13 (supported by cited evidence)
+- SUPPORTED `In simpler workspaces, direct retrieval and evaluation are sufficient.` page=39 overlap=6 (supported by cited evidence)
 - SUPPORTED `Even though Sentence-BERT performed better than the other methods, its alignment rate (87.` page=39 overlap=23 (supported by cited evidence)
 - SUPPORTED `As workspace complexity increases, the search component may become more valuable.` page=39 overlap=10 (supported by cited evidence)
 - SUPPORTED `Search Method | Alignment Rate BM2.5 | 86.06%` page=39 overlap=7 (supported by cited evidence)
@@ -1367,4 +1375,4 @@ Evidence:
 | ABS-3 | unrelated-topic | True | True | True |  |
 | ABS-4 | out-of-knowledge | True | True | True |  |
 | ABS-5 | out-of-knowledge | True | True | True |  |
-| ABS-6 | unrelated-topic | True | True | True |  |
+| ABS-6 | unrelated-topic | False | False | False |  |

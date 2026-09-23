@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from src.cache import DiskCache
-from src.config import Settings, get_settings
+from src.config import Settings, get_settings, retrieval_config_fingerprint
 from src.generation.citation import CitationValidator, build_citations
 from src.generation.llm import LLMProvider, build_llm
 from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
@@ -97,6 +97,7 @@ class RagPipeline:
         }
         self._warn_on_index_metadata_mismatch()
         self._index_signature = self._compute_index_signature()
+        self._retrieval_cfg_hash = self._retrieval_config_fingerprint()
         logger.info(
             "Pipeline ready: %d chunks, embedder=%s, llm=%s, reranker=%s",
             len(self._chunks_by_id),
@@ -149,6 +150,15 @@ class RagPipeline:
     def _compute_index_signature(self) -> str:
         ids = sorted(self._chunks_by_id.keys())[:50]
         return f"{len(self._chunks_by_id)}:{self.embedder.name()}:{ids}"
+
+    def _retrieval_config_fingerprint(self) -> str:
+        """Hash of every retrieval/sufficiency setting that affects cached results.
+
+        The stored retrieval hits are only valid while the retrieval stack and the
+        sufficiency gate are configured the same way. Omitting thresholds here caused
+        stale entries from an earlier config to be served (ABS-6 regression).
+        """
+        return retrieval_config_fingerprint(self.settings)
 
     def answer(
         self,
@@ -309,6 +319,7 @@ class RagPipeline:
                 "m": self.settings.hybrid_method,
                 "k": self.settings.dense_top_k,
                 "tag": cache_tag,
+                "cfg": self._retrieval_cfg_hash,
             },
             sort_keys=True,
         )
@@ -320,7 +331,7 @@ class RagPipeline:
         if cached:
             self.stats.retrieval_cache_hits += 1
             chunks = []
-            for d in cached:
+            for d in cached["chunks"]:
                 c = self._chunks_by_id.get(d["chunk_id"])
                 if c is not None:
                     chunks.append(
@@ -334,12 +345,11 @@ class RagPipeline:
                     )
             debug.fused_hits = [c.to_dict() for c in chunks]
             debug.cached = True
-            sufficient = self.hybrid._sufficient(
-                chunks,
-                expanded,
-                self.settings.min_similarity,
-                self.settings.knowledge_boundary_min_sim,
-            )
+            # The sufficiency verdict is persisted with the hit list so the
+            # cache-hit path is byte-identical to a fresh retrieval for the same
+            # query/config/index (fresh `_sufficient` sees the full candidate
+            # set, top-k only would diverge — ABS-6 stale-verdict class of bug).
+            sufficient = cached.get("sufficient", False)
             return chunks, sufficient, True
 
         top, sufficient, filtered = self.hybrid.retrieve(
@@ -351,7 +361,6 @@ class RagPipeline:
             alpha=self.settings.hybrid_alpha,
             method=self.settings.hybrid_method,
             min_similarity=self.settings.min_similarity,
-            knowledge_floor=self.settings.knowledge_boundary_min_sim,
             chunk_types=route.chunk_types or None,
             type_boost=route.type_boost,
         )
@@ -370,7 +379,14 @@ class RagPipeline:
         debug.fused_hits = [c.to_dict() for c in top]
         debug.filtered_out_ids = filtered
         if self.settings.enable_retrieval_cache:
-            self.cache.set("retrieval", cache_payload, [c.to_dict() for c in top])
+            self.cache.set(
+                "retrieval",
+                cache_payload,
+                {
+                    "sufficient": sufficient,
+                    "chunks": [c.to_dict() for c in top],
+                },
+            )
         return top, sufficient, False
 
     def _generate(

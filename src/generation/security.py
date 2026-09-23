@@ -124,18 +124,38 @@ NEUTRAL_PLACEHOLDER = "[REDACTED: embedded-instruction]"
 
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 
+# Second line of defense beyond the verbatim marker list: flag any sentence that
+# *starts* with an imperative second-person instruction verb. The corpus was
+# checked for false positives — every use of ignore/reveal/disregard in the paper
+# is first-person or third-person prose ("we found", "our experiments revealed"),
+# never a bare imperative to the model.
+_IMPERATIVE_LEADER = re.compile(
+    r"^\s*(?:"
+    r"ignore|forget|disregard|pretend|assume|invent|reveal|output|respond|"
+    r"answer|now|never|always|instead|override|disobey|"
+    r"do not|don'?t|you must|you will|you are|you should|"
+    r"from now on|act as if|from now"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _sentence_is_suspicious(part: str) -> bool:
+    lowered = part.lower()
+    if any(m in lowered for m in RETRIEVED_INJECTION_PATTERNS):
+        return True
+    return bool(_IMPERATIVE_LEADER.match(part))
+
 
 def neutralize_retrieved_text(text: str, placeholder: str = NEUTRAL_PLACEHOLDER) -> str:
     parts = _SENTENCE_SPLIT.split(text.strip())
     if len(parts) <= 1:
-        lowered = text.lower()
-        if any(m in lowered for m in RETRIEVED_INJECTION_PATTERNS):
+        if _sentence_is_suspicious(text):
             return placeholder
         return text
     flagged: List[int] = []
     for i, part in enumerate(parts):
-        lowered = part.lower()
-        if any(m in lowered for m in RETRIEVED_INJECTION_PATTERNS):
+        if _sentence_is_suspicious(part):
             flagged.append(i)
     if not flagged:
         return text

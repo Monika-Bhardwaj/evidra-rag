@@ -170,9 +170,14 @@ not trip the gate — the earlier all-claims-strict gate over-abstained (golden 
 to 2/15) and was corrected.
 
 **Fail-closed exits now measurable:**
-1. retrieval gate — added `knowledge_boundary_min_sim` (0.30) floor so the sparse-token
-   fallback can no longer mark out-of-knowledge queries sufficient (golden best-cos
-   ≥ 0.451, abstain cases ≤ 0.284);
+1. retrieval gate — fail-closed dense gate: a query is supported only when the
+   cosine between the ORIGINAL (unexpanded) question embedding and some retrieved
+   chunk clears `min_similarity`. The `knowledge_boundary_min_sim` (0.30) sparse-token
+   fallback introduced in Phase 4 was **removed on 2026-09-23** and the gate was moved
+   to the raw-query embedding: ABS-6 leaked through both (token overlap on "2023"/"year"
+   and `numerical_lookup` expansion terms matching a filename chunk at 0.45). See
+   `docs/failure_analysis.md` for the full post-mortem; every golden question clears the
+   raw-query bar directly (best cosine ≥ 0.42);
 2. provider-abstention — if the provider itself returns the exact abstention sentence
    (`src/pipeline.py`), the response is recorded as `evidence_sufficient=False`
    (previously mis-tagged as a confident answer);

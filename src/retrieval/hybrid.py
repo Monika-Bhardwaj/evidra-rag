@@ -5,44 +5,12 @@ from typing import Dict, List, Optional, Set
 import numpy as np
 
 from src.logging_utils import get_logger
-from src.retrieval.bm25 import BM25Retriever, tokenize
+from src.retrieval.bm25 import BM25Retriever
 from src.retrieval.embeddings import Embedder
 from src.retrieval.vector_store import VectorStore
 from src.schemas import DocumentChunk, RetrievedChunk
 
 logger = get_logger(__name__)
-
-_STOPWORDS = {
-    "the",
-    "a",
-    "an",
-    "of",
-    "to",
-    "and",
-    "in",
-    "for",
-    "how",
-    "what",
-    "which",
-    "was",
-    "is",
-    "are",
-    "were",
-    "does",
-    "do",
-    "did",
-    "it",
-    "its",
-    "that",
-    "this",
-    "vs",
-    "vs.",
-    "on",
-    "with",
-    "as",
-    "at",
-    "by",
-}
 
 
 class HybridRetriever:
@@ -69,7 +37,6 @@ class HybridRetriever:
         alpha: float = 0.7,
         method: str = "weighted",
         min_similarity: float = 0.0,
-        knowledge_floor: float = 0.0,
         chunk_types: Optional[List[str]] = None,
         type_boost: Optional[Dict[str, float]] = None,
     ) -> tuple[List[RetrievedChunk], bool, List[str]]:
@@ -99,6 +66,18 @@ class HybridRetriever:
                 RetrievedChunk(chunk=chunk, dense_score=d_raw, sparse_score=s_raw, hybrid_score=0.0)
             )
 
+        # Sufficiency is judged on the *original* query embedding, not the
+        # expansion-averaged one. Expansion terms must never be able to pull an
+        # off-topic query over the bar: ABS-6 ("Who was named Time Person of the
+        # Year for 2023?") classified as `numerical_lookup`, whose expansion
+        # ("average time", "results table", "numbers", ...) matched a filename
+        # chunk ("results/processing time.txt.") at cosine 0.45 >= min_similarity.
+        raw_vector = self.embedder.encode([query])[0]
+        raw_dense: Dict[str, float] = {}
+        for idx, score in self.vector_store.search(raw_vector, k=max(1, dense_top_k * 2)):
+            cid = self.vector_store.chunks()[idx].chunk_id
+            raw_dense[cid] = max(raw_dense.get(cid, 0.0), float(score))
+
         if method == "rrf":
             fused = self._rrf_rank(fused, dense, sparse, alpha)
         else:
@@ -109,7 +88,7 @@ class HybridRetriever:
         if chunk_types:
             fused = [c for c in fused if c.chunk.chunk_type in chunk_types]
 
-        evidence_sufficient = self._sufficient(fused, variants, min_similarity, knowledge_floor)
+        evidence_sufficient = self._sufficient(fused, min_similarity, raw_dense)
         filtered = [c for c in fused if c.hybrid_score <= 0.0]
         fused = [c for c in fused if c.hybrid_score > 0.0]
         fused.sort(key=lambda c: c.hybrid_score, reverse=True)
@@ -117,30 +96,38 @@ class HybridRetriever:
         filtered_ids = [c.chunk.chunk_id for c in filtered]
         return top, evidence_sufficient, filtered_ids
 
+    @staticmethod
     def _sufficient(
-        self,
         fused: List[RetrievedChunk],
-        variants: List[str],
         min_similarity: float,
-        knowledge_floor: float = 0.0,
+        raw_dense: Optional[Dict[str, float]] = None,
     ) -> bool:
+        """Fail-closed sufficiency gate: at least one chunk must reach the dense bar.
+
+        The score is measured against the ORIGINAL question embedding
+        (`raw_dense`, keyed by chunk_id) when provided, not the
+        expansion-averaged `dense_score` on the fused rows. Two fixes landed here
+        (2026-09-23) after off-topic questions leaked through:
+
+        * The sparse-token fallback was removed: incidental query/chunk token
+          overlap ("2023", "year", "named") must not outvote a dense cosine far
+          below `min_similarity`.
+        * The gate is evaluated on the raw query, so expansion templates cannot
+          lift an unrelated query over the bar (ABS-6 matched a filename chunk at
+          0.45 only after `numerical_lookup` expansion injected "average time"
+          and "results table").
+
+        Every golden question clears the raw-query bar directly (measured best
+        cosine >= 0.42), so both changes cost no golden recall while making the
+        abstention boundary fail-closed.
+        """
         if not fused:
             return False
-        best_cos = max((c.dense_score for c in fused), default=0.0)
-        if best_cos >= min_similarity:
-            return True
-        if best_cos < knowledge_floor:
-            return False
-        query_tokens = {t for v in variants for t in tokenize(v)} - _STOPWORDS
-        if len(query_tokens) < 3:
-            return False
-        for c in fused:
-            if c.sparse_score <= 0.0:
-                continue
-            chunk_tokens = set(tokenize(c.chunk.text))
-            if len(query_tokens & chunk_tokens) >= 3:
-                return True
-        return False
+        if raw_dense is not None:
+            best = max((raw_dense.get(c.chunk.chunk_id, c.dense_score) for c in fused), default=0.0)
+        else:
+            best = max((c.dense_score for c in fused), default=0.0)
+        return best >= min_similarity
 
     def _mean_embedding(self, texts: List[str]) -> np.ndarray:
         embeddings = self.embedder.encode(texts)

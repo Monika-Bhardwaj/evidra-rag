@@ -82,7 +82,7 @@ def test_min_similarity_gate_blocks_unrelated(small_corpus, fake_embedder) -> No
     assert sufficient is False
 
 
-def test_knowledge_floor_blocks_sparse_fallback() -> None:
+def test_low_dense_cosine_fails_closed_despite_sparse_overlap() -> None:
     chunk = DocumentChunk(
         chunk_id="p1",
         text="quantum zephyr telemetry computing systems",
@@ -91,9 +91,54 @@ def test_knowledge_floor_blocks_sparse_fallback() -> None:
         chunk_type="narrative",
     )
     fused = [RetrievedChunk(chunk=chunk, dense_score=0.15, sparse_score=5.0, hybrid_score=0.4)]
-    query = ["quantum computing zephyr telemetry"]
-    assert HybridRetriever._sufficient(None, fused, query, 0.5, 0.0) is True
-    assert HybridRetriever._sufficient(None, fused, query, 0.5, 0.30) is False
+    # Sparse token overlap alone must never mark a query sufficient (ABS-6 regression).
+    assert HybridRetriever._sufficient(fused, 0.5) is False
+    assert HybridRetriever._sufficient(fused, 0.10) is True
+    assert HybridRetriever._sufficient([], 0.10) is False
+
+
+def test_sufficiency_must_use_full_candidate_set_not_topk_slice() -> None:
+    # A high-dense chunk can rank outside the top-k slice after hybrid fusion.
+    # Evaluating sufficiency on only the top-k would flip the verdict between the
+    # cache-hit and cache-miss paths; the gate runs on the full candidate set and
+    # the pipeline persists that verdict with the cached entry.
+    weak = DocumentChunk(
+        chunk_id="p1",
+        text="telemetry",
+        page=1,
+        section="s",
+        chunk_type="narrative",
+    )
+    strong = DocumentChunk(
+        chunk_id="p2",
+        text="quantum computing telemetry systems",
+        page=1,
+        section="s",
+        chunk_type="narrative",
+    )
+    full = [
+        RetrievedChunk(chunk=weak, dense_score=0.60, sparse_score=9.0, hybrid_score=0.90),
+        RetrievedChunk(chunk=strong, dense_score=0.71, sparse_score=2.0, hybrid_score=0.50),
+    ]
+    topk_slice = [full[0]]
+    assert HybridRetriever._sufficient(full, 0.7) is True
+    assert HybridRetriever._sufficient(topk_slice, 0.7) is False
+
+
+def test_sufficiency_gate_uses_raw_query_cosine_not_expanded() -> None:
+    # ABS-6 regression: the expansion-averaged cosine can clear min_similarity
+    # for an off-topic query while the raw-question cosine stays far below it.
+    chunk = DocumentChunk(
+        chunk_id="p1",
+        text="results/processing time.txt.",
+        page=1,
+        section="s",
+        chunk_type="table",
+    )
+    fused = [RetrievedChunk(chunk=chunk, dense_score=0.45, sparse_score=3.0, hybrid_score=0.6)]
+    raw_dense = {"p1": 0.19}
+    assert HybridRetriever._sufficient(fused, 0.35) is True
+    assert HybridRetriever._sufficient(fused, 0.35, raw_dense) is False
 
 
 def test_chunk_type_filter(small_corpus, fake_embedder) -> None:
