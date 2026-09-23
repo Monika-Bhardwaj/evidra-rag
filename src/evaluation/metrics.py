@@ -7,15 +7,16 @@ from typing import Dict, List, Optional, Sequence, Set
 import numpy as np
 
 from src.generation.citation import CitationValidator
-from src.schemas import RAGResponse, RetrievedChunk
-from src.schemas import DocumentChunk
+from src.schemas import DocumentChunk, RAGResponse, RetrievedChunk
 
 
 def _norm(value: str) -> str:
     return value.replace(",", "").replace("%", "").strip().lower()
 
 
-def relevant_labels(chunks: Sequence[DocumentChunk], required_evidence: List[str]) -> Dict[str, Set[str]]:
+def relevant_labels(
+    chunks: Sequence[DocumentChunk], required_evidence: List[str]
+) -> Dict[str, Set[str]]:
     labels: Dict[str, Set[str]] = {}
     for chunk in chunks:
         text = chunk.text.lower()
@@ -68,7 +69,9 @@ def ndcg_at_k(ranked_ids: List[str], gains: Dict[str, float], k: int) -> float:
     return min(1.0, dcg / idcg)
 
 
-def is_relevant_set(chunks: Sequence[DocumentChunk], required_evidence: List[str], k: int = 6) -> Set[str]:
+def is_relevant_set(
+    chunks: Sequence[DocumentChunk], required_evidence: List[str], k: int = 6
+) -> Set[str]:
     relevant: Set[str] = set()
     for chunk in chunks:
         if graded_relevance(chunk.text, required_evidence) > 0:
@@ -97,6 +100,19 @@ def retrieval_metrics(
     }
 
 
+def cited_metrics(used: Sequence[RetrievedChunk], gold_ids: Optional[Set[str]]) -> Dict[str, float]:
+    if gold_ids is None:
+        return {"cited_recall": 1.0, "cited_precision": 1.0}
+    used_ids = [c.chunk.chunk_id for c in used]
+    if not used_ids:
+        return {"cited_recall": 0.0, "cited_precision": 0.0}
+    hits = len(set(used_ids) & gold_ids)
+    return {
+        "cited_recall": round(hits / len(gold_ids), 4),
+        "cited_precision": round(hits / len(used_ids), 4),
+    }
+
+
 def page_correctness(source_chunks: List[RetrievedChunk], expected_pages: List[int]) -> bool:
     if not expected_pages:
         return True
@@ -118,9 +134,8 @@ def citation_correctness(answer: str, source_chunks: List[RetrievedChunk]) -> Di
     correct_page = bool(pages_cited & evidence_pages)
     return {
         "has_citation": has_citation,
-        "citation_page_matches_evidence": correct_page and any(
-            c.chunk.page in pages_cited for c in source_chunks
-        ),
+        "citation_page_matches_evidence": correct_page
+        and any(c.chunk.page in pages_cited for c in source_chunks),
     }
 
 

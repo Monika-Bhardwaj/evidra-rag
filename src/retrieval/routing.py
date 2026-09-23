@@ -26,15 +26,28 @@ class QueryRouter:
             boost["table"] = 0.18
             boost["result"] = 0.10
             boost["cost-analysis"] = 0.12
-        if "cost" in q and ("agent-as-a-judge" in q or "human-as-a-judge" in q or "human" in q.split(" compared")[0]):
+        if "cost" in q and (
+            "agent-as-a-judge" in q or "human-as-a-judge" in q or "human" in q.split(" compared")[0]
+        ):
             if not ("percentage" in q or "savings" in q or " save " in q or q.startswith("save ")):
                 boost["cost-analysis"] = 0.22
             return RouteSpec(type_boost=boost, note="cost-comparison routing")
-        if "search" in q or "bm25" in q or "sentence-bert" in q or "fuzzy search" in q or "search module" in q:
+        if (
+            "search" in q
+            or "bm25" in q
+            or "sentence-bert" in q
+            or "fuzzy search" in q
+            or "search module" in q
+        ):
             boost["appendix"] = 0.12
             boost["result"] = 0.06
             boost["narrative"] = 0.05
-        if "svm" in q or "lstm" in q or "architecture" in q and ("query" in q or "distribution" in q or "mentioned" in q):
+        if (
+            "svm" in q
+            or "lstm" in q
+            or "architecture" in q
+            and ("query" in q or "distribution" in q or "mentioned" in q)
+        ):
             boost["appendix"] = 0.12
             boost["result"] = 0.06
         if "ablation" in q or "ask component" in q or "components" in q:
@@ -47,8 +60,14 @@ class QueryRouter:
             boost["result"] = boost.get("result", 0.0) + 0.05
         return RouteSpec(type_boost=boost, chunk_types=types, note="default routing")
 
-    def select_evidence(self, candidates: List[RetrievedChunk], intent: QueryIntent, top_k: int) -> List[RetrievedChunk]:
-        ranked = sorted(candidates, key=lambda c: c.rerank_score if c.rerank_score is not None else c.hybrid_score, reverse=True)
+    def select_evidence(
+        self, candidates: List[RetrievedChunk], intent: QueryIntent, top_k: int
+    ) -> List[RetrievedChunk]:
+        ranked = sorted(
+            candidates,
+            key=lambda c: c.rerank_score if c.rerank_score is not None else c.hybrid_score,
+            reverse=True,
+        )
         selected = ranked[:top_k]
         if intent.is_numeric:
             table_pool = [c for c in ranked if c.chunk.chunk_type in TABLE_TYPES]

@@ -54,12 +54,29 @@ class QueryIntent:
 class QueryClassifier:
     def classify(self, query: str) -> QueryIntent:
         q = query.lower()
-        has_number = bool(PERCENT_RE.search(query) or MONEY_RE.search(query) or TIME_RE.search(query) or re.search(r"\d", query))
+        has_number = bool(
+            PERCENT_RE.search(query)
+            or MONEY_RE.search(query)
+            or TIME_RE.search(query)
+            or re.search(r"\d", query)
+        )
         is_numeric = bool(
             any(term in q for term in NUMERIC_TERMS)
             and (
                 has_number
-                or any(term in q for term in ("cost", "time", "average", "rate", "%", "alignment", "how much", "how long"))
+                or any(
+                    term in q
+                    for term in (
+                        "cost",
+                        "time",
+                        "average",
+                        "rate",
+                        "%",
+                        "alignment",
+                        "how much",
+                        "how long",
+                    )
+                )
             )
         )
         entities = self._extract_entities(q)
@@ -68,13 +85,52 @@ class QueryClassifier:
 
         if self._is_jailbreak(q):
             category = "jailbreak"
-        elif any(term in q for term in ("compare", "versus", "vs", "difference", "instead of", "than")):
+        elif any(
+            term in q for term in ("compare", "versus", "vs", "difference", "instead of", "than")
+        ):
             category = "comparison"
-        elif any(term in q for term in ("cost", "price", "how much", "how long", "average", "time", "rate", "savings", "percentage")):
+        elif any(
+            term in q
+            for term in (
+                "cost",
+                "price",
+                "how much",
+                "how long",
+                "average",
+                "time",
+                "rate",
+                "savings",
+                "percentage",
+            )
+        ):
             category = "numerical_lookup"
-        elif any(term in q for term in ("what is", "what are", "define", "definition", "refers to", "is a framework")):
+        elif any(
+            term in q
+            for term in (
+                "what is",
+                "what are",
+                "define",
+                "definition",
+                "refers to",
+                "is a framework",
+            )
+        ):
             category = "definition"
-        elif any(term in q for term in ("how does", "how do", "method", "approach", "framework", "algorithm", "pipeline", "architecture", "workflow", "why")):
+        elif any(
+            term in q
+            for term in (
+                "how does",
+                "how do",
+                "method",
+                "approach",
+                "framework",
+                "algorithm",
+                "pipeline",
+                "architecture",
+                "workflow",
+                "why",
+            )
+        ):
             category = "methodology"
         elif any(term in q for term in ("table", "figure", "row", "column")):
             category = "table_lookup"

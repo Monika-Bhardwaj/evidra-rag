@@ -1,0 +1,5 @@
+label,passed,n_questions,pass_rate,cited_recall,cited_precision,recall_at_6,precision_at_6,mrr,ndcg_at_6,avg_numeric_recall,avg_completeness,citation_accuracy,faithfulness_rate,page_accuracy,avg_latency_ms
+"default-off (weighted-0.5, rerank off)",15,15,1.0,0.8944,0.3067,0.8944,0.2556,0.7989,0.7081,1.0,0.9833,1.0,1.0,1.0,5.2
+"best-off (weighted-0.5, rerank off)",15,15,1.0,0.8944,0.3067,0.8944,0.2556,0.7989,0.7081,1.0,0.9833,1.0,1.0,1.0,5.6
+default-score (rerank=score),14,15,0.9333,0.8778,0.2933,0.8944,0.2556,0.7989,0.7081,0.9333,0.95,1.0,1.0,1.0,5.1
+default-cross (rerank=cross),15,15,1.0,0.8278,0.2933,0.8944,0.2556,0.7989,0.7081,1.0,0.9167,1.0,1.0,0.9333,848.4

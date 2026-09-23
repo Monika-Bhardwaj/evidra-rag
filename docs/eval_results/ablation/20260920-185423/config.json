@@ -1,0 +1,10 @@
+{
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "dense_top_k": 48,
+  "bm25_top_k": 48,
+  "index_chunks": 139,
+  "min_similarity": 0.35,
+  "questions": 15,
+  "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "generated_utc": "2026-09-20T18:54:23"
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "label": "default-off (weighted-0.5, rerank off)",
+    "config": {
+      "use_reranker": false
+    },
+    "n_questions": 15,
+    "passed": 15,
+    "pass_rate": 1.0,
+    "recall_at_6": 0.8944,
+    "precision_at_6": 0.2556,
+    "mrr": 0.7989,
+    "ndcg_at_6": 0.7081,
+    "avg_numeric_recall": 1.0,
+    "avg_completeness": 0.9833,
+    "citation_accuracy": 1.0,
+    "faithfulness_rate": 1.0,
+    "page_accuracy": 1.0,
+    "cited_recall": 0.8944,
+    "cited_precision": 0.3067,
+    "avg_latency_ms": 5.2
+  },
+  {
+    "label": "best-off (weighted-0.5, rerank off)",
+    "config": {
+      "use_reranker": false,
+      "hybrid_alpha": 0.5,
+      "hybrid_method": "weighted",
+      "use_query_routing": true,
+      "use_query_expansion": true
+    },
+    "n_questions": 15,
+    "passed": 15,
+    "pass_rate": 1.0,
+    "recall_at_6": 0.8944,
+    "precision_at_6": 0.2556,
+    "mrr": 0.7989,
+    "ndcg_at_6": 0.7081,
+    "avg_numeric_recall": 1.0,
+    "avg_completeness": 0.9833,
+    "citation_accuracy": 1.0,
+    "faithfulness_rate": 1.0,
+    "page_accuracy": 1.0,
+    "cited_recall": 0.8944,
+    "cited_precision": 0.3067,
+    "avg_latency_ms": 5.6
+  },
+  {
+    "label": "default-score (rerank=score)",
+    "config": {
+      "use_reranker": true,
+      "reranker_kind": "score"
+    },
+    "n_questions": 15,
+    "passed": 14,
+    "pass_rate": 0.9333,
+    "recall_at_6": 0.8944,
+    "precision_at_6": 0.2556,
+    "mrr": 0.7989,
+    "ndcg_at_6": 0.7081,
+    "avg_numeric_recall": 0.9333,
+    "avg_completeness": 0.95,
+    "citation_accuracy": 1.0,
+    "faithfulness_rate": 1.0,
+    "page_accuracy": 1.0,
+    "cited_recall": 0.8778,
+    "cited_precision": 0.2933,
+    "avg_latency_ms": 5.1
+  },
+  {
+    "label": "default-cross (rerank=cross)",
+    "config": {
+      "use_reranker": true,
+      "reranker_kind": "cross"
+    },
+    "n_questions": 15,
+    "passed": 15,
+    "pass_rate": 1.0,
+    "recall_at_6": 0.8944,
+    "precision_at_6": 0.2556,
+    "mrr": 0.7989,
+    "ndcg_at_6": 0.7081,
+    "avg_numeric_recall": 1.0,
+    "avg_completeness": 0.9167,
+    "citation_accuracy": 1.0,
+    "faithfulness_rate": 1.0,
+    "page_accuracy": 0.9333,
+    "cited_recall": 0.8278,
+    "cited_precision": 0.2933,
+    "avg_latency_ms": 848.4
+  }
+]
