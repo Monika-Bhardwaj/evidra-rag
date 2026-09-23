@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import numpy as np
-
 from src.retrieval.bm25 import BM25Retriever, tokenize
 from src.retrieval.hybrid import HybridRetriever
 from src.retrieval.reranker import NoopReranker, ScoreReranker
 from src.retrieval.vector_store import FAISSVectorStore, InMemoryVectorStore
+from src.schemas import DocumentChunk, RetrievedChunk
 
 
 def _build_retriever(corpus, embedder) -> HybridRetriever:
@@ -25,7 +24,13 @@ def test_bm25_finds_exact_terms(small_corpus) -> None:
 
 
 def test_tokenize() -> None:
-    assert tokenize(" OpenHands average cost: $6.38! ") == ["openhands", "average", "cost", "6", "38"]
+    assert tokenize(" OpenHands average cost: $6.38! ") == [
+        "openhands",
+        "average",
+        "cost",
+        "6",
+        "38",
+    ]
 
 
 def test_dense_retrieval_ranking(small_corpus, fake_embedder) -> None:
@@ -77,6 +82,20 @@ def test_min_similarity_gate_blocks_unrelated(small_corpus, fake_embedder) -> No
     assert sufficient is False
 
 
+def test_knowledge_floor_blocks_sparse_fallback() -> None:
+    chunk = DocumentChunk(
+        chunk_id="p1",
+        text="quantum zephyr telemetry computing systems",
+        page=1,
+        section="s",
+        chunk_type="narrative",
+    )
+    fused = [RetrievedChunk(chunk=chunk, dense_score=0.15, sparse_score=5.0, hybrid_score=0.4)]
+    query = ["quantum computing zephyr telemetry"]
+    assert HybridRetriever._sufficient(None, fused, query, 0.5, 0.0) is True
+    assert HybridRetriever._sufficient(None, fused, query, 0.5, 0.30) is False
+
+
 def test_chunk_type_filter(small_corpus, fake_embedder) -> None:
     hybrid = _build_retriever(small_corpus, fake_embedder)
     top, _, _ = hybrid.retrieve(
@@ -102,6 +121,18 @@ def test_score_reranker_assigns_scores(small_corpus, fake_embedder) -> None:
     reranker = ScoreReranker()
     reranked = reranker.rerank("OpenHands average cost", top, 2)
     assert len(reranked) == 2
+
+
+def test_build_reranker_strategy() -> None:
+    from src.retrieval.reranker import build_reranker
+
+    noop = build_reranker(enabled=False, model_name="x")
+    assert isinstance(noop, NoopReranker)
+    assert not noop.is_used()
+
+    score = build_reranker(enabled=True, model_name="x", kind="score")
+    assert isinstance(score, ScoreReranker)
+    assert score.is_used()
 
 
 def test_vector_store_persist_roundtrip(tmp_path, small_corpus, fake_embedder) -> None:

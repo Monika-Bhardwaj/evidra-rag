@@ -1,0 +1,35 @@
+{
+  "description": "Out-of-knowledge / unrelated questions used to measure the abstention path (fail closed).",
+  "questions": [
+    {
+      "id": "ABS-1",
+      "question": "What is the capital of France?",
+      "reason": "out-of-knowledge"
+    },
+    {
+      "id": "ABS-2",
+      "question": "What was Microsoft's total revenue in the fiscal year 2025?",
+      "reason": "unrelated-topic"
+    },
+    {
+      "id": "ABS-3",
+      "question": "Who wrote the novel The Great Gatsby and in which year was it published?",
+      "reason": "unrelated-topic"
+    },
+    {
+      "id": "ABS-4",
+      "question": "What is the recommended daily intake of vitamin C according to WHO?",
+      "reason": "out-of-knowledge"
+    },
+    {
+      "id": "ABS-5",
+      "question": "What is the chemical formula for table salt?",
+      "reason": "out-of-knowledge"
+    },
+    {
+      "id": "ABS-6",
+      "question": "Who was named Time Person of the Year for 2023?",
+      "reason": "unrelated-topic"
+    }
+  ]
+}

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.ingestion.loader import PDFLoader
-from src.ingestion.loader import PageDocument
+from src.ingestion.loader import PageDocument, PDFLoader
 from src.ingestion.parser import Parser, TextPreprocessor
 
 

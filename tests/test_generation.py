@@ -3,10 +3,10 @@ from __future__ import annotations
 from src.generation.citation import CitationValidator
 from src.generation.llm import LocalExtractiveProvider
 from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
-from src.retrieval.hybrid import HybridRetriever
-from src.schemas import RetrievedChunk
-from src.retrieval.vector_store import InMemoryVectorStore
 from src.retrieval.bm25 import BM25Retriever
+from src.retrieval.hybrid import HybridRetriever
+from src.retrieval.vector_store import InMemoryVectorStore
+from src.schemas import RetrievedChunk
 
 
 def _evidence(retriever, query) -> list[RetrievedChunk]:
@@ -73,9 +73,7 @@ def test_local_extractive_answer_uses_evidence(small_corpus, fake_embedder) -> N
     )
     assert "According to the paper" in result.text
     assert "Page 5" in result.text
-    assert any(
-        token in result.text.lower() for token in ("openhands", "6.38", "cost")
-    )
+    assert any(token in result.text.lower() for token in ("openhands", "6.38", "cost"))
 
 
 def test_local_extractive_no_evidence() -> None:
@@ -93,5 +91,7 @@ def test_offline_provider_never_invents() -> None:
     result = provider.chat(
         [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]
     )
-    assert "penguin" not in result.text.lower() or "could not find sufficient evidence" in result.text
+    assert (
+        "penguin" not in result.text.lower() or "could not find sufficient evidence" in result.text
+    )
     assert "72" not in result.text
