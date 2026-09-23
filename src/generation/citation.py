@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
+from typing import List, Optional, Set
 
 from src.schemas import Citation, DocumentChunk, RetrievedChunk
 
@@ -54,7 +54,9 @@ class CitationValidator:
             level=level,
         )
 
-    def _sentence_support(self, answer: str, evidence: List[RetrievedChunk]) -> tuple[bool, List[str]]:
+    def _sentence_support(
+        self, answer: str, evidence: List[RetrievedChunk]
+    ) -> tuple[bool, List[str]]:
         sentences = re.split(r"(?<=[.!?])\s+", answer)
         evidence_blocks: List[DocumentChunk] = [e.chunk for e in evidence]
         union_numbers: List[str] = _normalize_number_sequence(
@@ -73,7 +75,9 @@ class CitationValidator:
                     _token_overlap(sentence_clean, c.text) >= 1 for c in evidence_blocks
                 )
             else:
-                supported = any(_token_overlap(sentence_clean, c.text) >= 1 for c in evidence_blocks)
+                supported = any(
+                    _token_overlap(sentence_clean, c.text) >= 1 for c in evidence_blocks
+                )
             if not supported:
                 unsupported.append(sentence_clean)
         return (not unsupported, unsupported)

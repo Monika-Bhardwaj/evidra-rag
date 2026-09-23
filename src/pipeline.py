@@ -9,11 +9,11 @@ from src.cache import DiskCache
 from src.config import Settings, get_settings
 from src.generation.citation import CitationValidator, build_citations
 from src.generation.llm import LLMProvider, build_llm
-from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt, no_evidence_prompt
-from src.generation.security import JailbreakGuard
+from src.generation.prompts import SYSTEM_PROMPT, build_user_prompt
+from src.generation.security import JailbreakGuard, neutralize_retrieved_text
 from src.logging_utils import get_logger
 from src.retrieval.bm25 import BM25Retriever
-from src.retrieval.embeddings import Embedder, build_embedder
+from src.retrieval.embeddings import build_embedder
 from src.retrieval.hybrid import HybridRetriever
 from src.retrieval.query_expansion import QueryExpander
 from src.retrieval.query_understanding import QueryClassifier
@@ -27,6 +27,7 @@ from src.schemas import (
     RetrievalDebug,
     RetrievedChunk,
 )
+from src.validation.claims import ClaimVerifier
 
 logger = get_logger(__name__)
 
@@ -80,6 +81,7 @@ class RagPipeline:
             enabled=self.settings.use_reranker,
             model_name=self.settings.reranker_model,
             device=self.settings.embedding_device,
+            kind=self.settings.reranker_kind,
         )
         self.llm: LLMProvider = build_llm(self.settings)
         self.classifier = QueryClassifier()
@@ -87,11 +89,13 @@ class RagPipeline:
         self.router = QueryRouter()
         self.guard = JailbreakGuard()
         self.validator = CitationValidator()
+        self.claim_verifier = ClaimVerifier()
         self.cache = DiskCache(self.settings.cache_dir_path)
         self.stats = PipelineStats()
         self._chunks_by_id: Dict[str, DocumentChunk] = {
             c.chunk_id: c for c in self.vector_store.chunks()
         }
+        self._warn_on_index_metadata_mismatch()
         self._index_signature = self._compute_index_signature()
         logger.info(
             "Pipeline ready: %d chunks, embedder=%s, llm=%s, reranker=%s",
@@ -105,9 +109,7 @@ class RagPipeline:
         index_dir = self.settings.index_dir_path
         chunks_json = index_dir / "chunks.json"
         if not chunks_json.exists():
-            raise IndexNotFoundError(
-                "No index found. Run `python scripts/build_index.py` first."
-            )
+            raise IndexNotFoundError("No index found. Run `python scripts/build_index.py` first.")
         return self._load_faiss(index_dir)
 
     def _load_faiss(self, index_dir) -> VectorStore:
@@ -121,9 +123,28 @@ class RagPipeline:
             logger.warning("FAISS index load failed (%s); trying in-memory fallback.", exc)
         store = InMemoryVectorStore.load(index_dir)
         if store.size() == 0:
-            raise IndexNotFoundError("Index artifacts exist but could not be loaded. Rebuild the index.")
+            raise IndexNotFoundError(
+                "Index artifacts exist but could not be loaded. Rebuild the index."
+            )
         logger.info("Using in-memory vector-store fallback (no FAISS index).")
         return store
+
+    def _warn_on_index_metadata_mismatch(self) -> None:
+        meta_path = self.settings.index_dir_path / "index_meta.json"
+        if not meta_path.exists():
+            return
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return
+        stored = meta.get("embedding_model", "")
+        if stored and stored != self.settings.embedding_model:
+            logger.warning(
+                "Index was built with embedding_model=%r but settings use %r; "
+                "rebuild the index or scores may be invalid.",
+                stored,
+                self.settings.embedding_model,
+            )
 
     def _compute_index_signature(self) -> str:
         ids = sorted(self._chunks_by_id.keys())[:50]
@@ -158,7 +179,9 @@ class RagPipeline:
             if self.settings.use_query_expansion
             else [question]
         )
-        route = self.router.route(intent, question) if self.settings.use_query_routing else RouteSpec()
+        route = (
+            self.router.route(intent, question) if self.settings.use_query_routing else RouteSpec()
+        )
 
         retrieval_debug = RetrievalDebug(
             query=question,
@@ -197,13 +220,56 @@ class RagPipeline:
         if failed:
             self.stats.generation_failures += 1
 
+        if answer.strip().lower() == INSF_MSG.lower():
+            self.stats.insufficient_evidence += 1
+            return self._build_response(
+                question=question,
+                answer=INSF_MSG,
+                evidence=[],
+                grounded_confidence=0.0,
+                sufficient=False,
+                retrieval_debug=retrieval_debug,
+                generation=generation,
+                warning="provider returned the abstention sentence (fail closed). [provider-abstained]",
+                start=start,
+                history=history,
+            )
+
         validation = self.validator.validate(
             answer,
             evidence,
             numeric_question=intent.is_numeric,
         )
+        claim_verdicts = self.claim_verifier.verify(answer, evidence)
+        substantive_answer = INSF_MSG.lower() not in answer.lower()
+        has_unsupported = any(c.verdict == "unsupported" for c in claim_verdicts)
+        claims_supported = not has_unsupported and (bool(claim_verdicts) or not substantive_answer)
+        if not validation.claim_supported or not claims_supported:
+            self.stats.insufficient_evidence += 1
+            reason = "claim-verification" if not claims_supported else "validation"
+            warning = (
+                "Low grounding confidence: unsupported claims detected; abstaining with the "
+                "exact abstention sentence (fail closed)."
+                if not claims_supported
+                else "Low grounding confidence; unsupported claims detected. Abstaining (fail closed)."
+            )
+            return self._build_response(
+                question=question,
+                answer=INSF_MSG,
+                evidence=[],
+                grounded_confidence=0.0,
+                sufficient=False,
+                retrieval_debug=retrieval_debug,
+                generation=generation,
+                warning=f"{warning} [{reason}]",
+                start=start,
+                history=history,
+            )
         if security.flagged:
-            answer = answer + "\n\n[Note: a prompt-injection attempt was detected and neutralized; this answer remains PDF-grounded.]"
+            answer = (
+                answer
+                + "\n\n[Note: a prompt-injection attempt was detected and neutralized; this answer remains PDF-grounded.]"
+            )
         return self._build_response(
             question=question,
             answer=answer,
@@ -215,7 +281,11 @@ class RagPipeline:
             warning=(
                 security.safe_message
                 if security.flagged
-                else ("Low grounding confidence; unsupported claims detected." if not validation.claim_supported else None)
+                else (
+                    "Low grounding confidence; unsupported claims detected."
+                    if not validation.claim_supported
+                    else None
+                )
             ),
             start=start,
             history=history,
@@ -229,7 +299,6 @@ class RagPipeline:
         route: RouteSpec,
         debug: RetrievalDebug,
     ) -> tuple[List[RetrievedChunk], bool, bool]:
-        import hashlib
 
         cache_tag = self._index_signature
         cache_payload = json.dumps(
@@ -243,7 +312,11 @@ class RagPipeline:
             },
             sort_keys=True,
         )
-        cached = self.cache.get("retrieval", cache_payload) if self.settings.enable_retrieval_cache else None
+        cached = (
+            self.cache.get("retrieval", cache_payload)
+            if self.settings.enable_retrieval_cache
+            else None
+        )
         if cached:
             self.stats.retrieval_cache_hits += 1
             chunks = []
@@ -261,7 +334,13 @@ class RagPipeline:
                     )
             debug.fused_hits = [c.to_dict() for c in chunks]
             debug.cached = True
-            return chunks, True, True
+            sufficient = self.hybrid._sufficient(
+                chunks,
+                expanded,
+                self.settings.min_similarity,
+                self.settings.knowledge_boundary_min_sim,
+            )
+            return chunks, sufficient, True
 
         top, sufficient, filtered = self.hybrid.retrieve(
             query=question,
@@ -272,14 +351,21 @@ class RagPipeline:
             alpha=self.settings.hybrid_alpha,
             method=self.settings.hybrid_method,
             min_similarity=self.settings.min_similarity,
+            knowledge_floor=self.settings.knowledge_boundary_min_sim,
             chunk_types=route.chunk_types or None,
             type_boost=route.type_boost,
         )
         debug.dense_hits = [
-            c.to_dict() for c in sorted(top, key=lambda c: c.dense_score, reverse=True)[: self.settings.dense_top_k]
+            c.to_dict()
+            for c in sorted(top, key=lambda c: c.dense_score, reverse=True)[
+                : self.settings.dense_top_k
+            ]
         ]
         debug.sparse_hits = [
-            c.to_dict() for c in sorted(top, key=lambda c: c.sparse_score, reverse=True)[: self.settings.bm25_top_k]
+            c.to_dict()
+            for c in sorted(top, key=lambda c: c.sparse_score, reverse=True)[
+                : self.settings.bm25_top_k
+            ]
         ]
         debug.fused_hits = [c.to_dict() for c in top]
         debug.filtered_out_ids = filtered
@@ -296,7 +382,7 @@ class RagPipeline:
     ) -> tuple[str, GenerationInfo, bool]:
         user_prompt = build_user_prompt(
             question=question,
-            evidence=evidence,
+            evidence=self._sanitize_prompt_evidence(evidence),
             history=history,
             context_max_tokens=self.settings.context_max_tokens,
         )
@@ -323,6 +409,27 @@ class RagPipeline:
 
         generation.latency_ms = 0.0
         return result.text, generation, False
+
+    def _sanitize_prompt_evidence(self, evidence: List[RetrievedChunk]) -> List[RetrievedChunk]:
+        from dataclasses import replace
+
+        sanitized: List[RetrievedChunk] = []
+        for c in evidence:
+            safe_text = neutralize_retrieved_text(c.chunk.text)
+            if safe_text == c.chunk.text:
+                sanitized.append(c)
+                continue
+            clean = replace(c.chunk, text=safe_text)
+            sanitized.append(
+                RetrievedChunk(
+                    chunk=clean,
+                    dense_score=c.dense_score,
+                    sparse_score=c.sparse_score,
+                    hybrid_score=c.hybrid_score,
+                    rerank_score=c.rerank_score,
+                )
+            )
+        return sanitized
 
     def _evidence_first_answer(self, evidence: List[RetrievedChunk]) -> str:
         lines = [
@@ -355,7 +462,9 @@ class RagPipeline:
             self.stats.total_est_cost_usd += generation.estimated_cost_usd
             self.stats.total_tokens += generation.prompt_tokens + generation.completion_tokens
         else:
-            generation = GenerationInfo(provider=self.llm.provider_name, model=self.llm.model, latency_ms=latency_ms)
+            generation = GenerationInfo(
+                provider=self.llm.provider_name, model=self.llm.model, latency_ms=latency_ms
+            )
         citations = build_citations(evidence)
         sources = [
             {
@@ -390,7 +499,9 @@ class RagPipeline:
             "confidence": response.grounded_confidence,
             "gen_provider": response.generation.provider if response.generation else None,
             "gen_model": response.generation.model if response.generation else None,
-            "tokens": (response.generation.prompt_tokens + response.generation.completion_tokens) if response.generation else 0,
+            "tokens": (response.generation.prompt_tokens + response.generation.completion_tokens)
+            if response.generation
+            else 0,
             "latency_ms": round(response.generation.latency_ms, 1) if response.generation else None,
             "est_cost_usd": response.generation.estimated_cost_usd if response.generation else 0.0,
             "warning": response.warning,

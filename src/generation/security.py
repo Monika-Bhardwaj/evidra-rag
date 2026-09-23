@@ -75,7 +75,9 @@ class JailbreakGuard:
         return SecurityAssessment(flagged=False)
 
     def sanitize_query(self, query: str) -> str:
-        sanitized = re.sub(r"^(ignore|forget|pretend|assume|do not|don't|act as)\b[^,.;?!]*[,.;?!]\s*", "", query)
+        sanitized = re.sub(
+            r"^(ignore|forget|pretend|assume|do not|don't|act as)\b[^,.;?!]*[,.;?!]\s*", "", query
+        )
         sanitized = re.split(
             r"\s+(?:and|then)\s+",
             sanitized.strip(),
@@ -84,12 +86,61 @@ class JailbreakGuard:
         if (
             isinstance(sanitized, list)
             and len(sanitized) == 2
-            and re.match(r"^(ignore|forget|disregard|pretend|assume|do not|don't)\b", sanitized[0], re.I)
+            and re.match(
+                r"^(ignore|forget|disregard|pretend|assume|do not|don't)\b", sanitized[0], re.I
+            )
         ):
             return sanitized[1].strip()
         result = sanitized[0] if isinstance(sanitized, list) else sanitized
         result = result.strip()
         return result if result else query
+
+
+RETRIEVED_INJECTION_PATTERNS = (
+    "ignore all previous instructions",
+    "ignore the above",
+    "ignore previous instructions",
+    "ignore prior instructions",
+    "forget everything",
+    "forget all instructions",
+    "disregard all previous",
+    "disregard the instructions",
+    "reveal your system prompt",
+    "you must now",
+    "you are now",
+    "new instructions:",
+    "system prompt:",
+    "act as if",
+    "pretend you are",
+    "output only",
+    "respond only with",
+    "do not mention",
+    "answer this instead",
+    "override your instructions",
+)
+
+NEUTRAL_PLACEHOLDER = "[REDACTED: embedded-instruction]"
+
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+
+
+def neutralize_retrieved_text(text: str, placeholder: str = NEUTRAL_PLACEHOLDER) -> str:
+    parts = _SENTENCE_SPLIT.split(text.strip())
+    if len(parts) <= 1:
+        lowered = text.lower()
+        if any(m in lowered for m in RETRIEVED_INJECTION_PATTERNS):
+            return placeholder
+        return text
+    flagged: List[int] = []
+    for i, part in enumerate(parts):
+        lowered = part.lower()
+        if any(m in lowered for m in RETRIEVED_INJECTION_PATTERNS):
+            flagged.append(i)
+    if not flagged:
+        return text
+    out = "\n".join(placeholder if i in flagged else part for i, part in enumerate(parts))
+    return out
 
 
 def strip_suspicious_instructions(query: str) -> bool:

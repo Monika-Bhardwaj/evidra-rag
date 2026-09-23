@@ -147,7 +147,9 @@ class Parser:
         return lines
 
     def _parse_page(self, page: PageDocument, text: str) -> List[Unit]:
-        span_lines = self._span_lines(page.page) or [(l, 10.0, False) for l in text.split("\n")]
+        span_lines = self._span_lines(page.page) or [
+            (line, 10.0, False) for line in text.split("\n")
+        ]
         repeats = self._repeated_short_lines(span_lines)
         heading_buffer: List[str] = []
         buffer: List[str] = []
@@ -210,20 +212,28 @@ class Parser:
         from collections import Counter
 
         counter = Counter(
-            s.strip()
-            for s, size, bold in span_lines
-            if s.strip() and len(s.strip()) < 60
+            s.strip() for s, size, bold in span_lines if s.strip() and len(s.strip()) < 60
         )
         return {s for s, count in counter.items() if count >= 3}
 
     def _is_heading(self, line: str, size: float, bold: bool) -> bool:
         if not line or len(line) > 70:
             return False
-        if FIGURE_RE.match(line) or TABLE_RE.match(line) or line.startswith("Metric") and len(line) < 20:
+        if (
+            FIGURE_RE.match(line)
+            or TABLE_RE.match(line)
+            or line.startswith("Metric")
+            and len(line) < 20
+        ):
             return False
         if size >= self.HEADING_MIN_SIZE:
             return True
-        if bold and size >= 9.5 and not line.endswith((".", ",", ":")) and not re.search(r"^(Table|Figure|Algorithm)\s+\d", line):
+        if (
+            bold
+            and size >= 9.5
+            and not line.endswith((".", ",", ":"))
+            and not re.search(r"^(Table|Figure|Algorithm)\s+\d", line)
+        ):
             return True
         if SECTION_RE.match(line) or APPENDIX_RE.match(line):
             return True

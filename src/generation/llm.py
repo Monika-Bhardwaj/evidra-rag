@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 import tenacity
 
 from src.config import Settings, est_price_for_model
-from src.generation.prompts import SYSTEM_PROMPT
 from src.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -36,9 +35,7 @@ def _chat_completion_with_retry(client, messages, model, temperature, max_tokens
         wait=tenacity.wait_exponential(multiplier=1.0, max=60),
         stop=tenacity.stop_after_attempt(5),
         retry=(
-            tenacity.retry_if_exception_type(
-                (ConnectionError, TimeoutError)
-            )
+            tenacity.retry_if_exception_type((ConnectionError, TimeoutError))
             | tenacity.retry_if_exception(lambda e: _is_rate_limit(e))
         ),
         reraise=True,
@@ -69,20 +66,29 @@ class LLMProvider(ABC):
         self.input_rate, self.output_rate = est_price_for_model(model)
 
     @abstractmethod
-    def _chat(self, messages: List[Dict[str, str]]) -> LLMResult:
-        ...
+    def _chat(self, messages: List[Dict[str, str]]) -> LLMResult: ...
 
     def chat(self, messages: List[Dict[str, str]]) -> LLMResult:
         return self._chat(messages)
 
     def _cost(self, prompt_tokens: int, completion_tokens: int) -> float:
-        return prompt_tokens / 1_000_000 * self.input_rate + completion_tokens / 1_000_000 * self.output_rate
+        return (
+            prompt_tokens / 1_000_000 * self.input_rate
+            + completion_tokens / 1_000_000 * self.output_rate
+        )
 
 
 class OpenAIProvider(LLMProvider):
     provider_name = "openai"
 
-    def __init__(self, api_key: str, model: str, base_url: str = "", temperature: float = 0.0, max_tokens: int = 512) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        base_url: str = "",
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+    ) -> None:
         from openai import OpenAI
 
         super().__init__(model, temperature, max_tokens)
@@ -113,16 +119,16 @@ class OpenAIProvider(LLMProvider):
             model=self.model,
             prompt_tokens=usage.prompt_tokens if usage else prompt_tokens,
             completion_tokens=completion_tokens,
-            cost_usd=self._cost(
-                usage.prompt_tokens if usage else prompt_tokens, completion_tokens
-            ),
+            cost_usd=self._cost(usage.prompt_tokens if usage else prompt_tokens, completion_tokens),
         )
 
 
 class GroqProvider(OpenAIProvider):
     provider_name = "groq"
 
-    def __init__(self, api_key: str, model: str, temperature: float = 0.0, max_tokens: int = 512) -> None:
+    def __init__(
+        self, api_key: str, model: str, temperature: float = 0.0, max_tokens: int = 512
+    ) -> None:
         super().__init__(
             api_key=api_key,
             model=model,
@@ -135,7 +141,9 @@ class GroqProvider(OpenAIProvider):
 class GeminiProvider(OpenAIProvider):
     provider_name = "gemini"
 
-    def __init__(self, api_key: str, model: str, temperature: float = 0.0, max_tokens: int = 512) -> None:
+    def __init__(
+        self, api_key: str, model: str, temperature: float = 0.0, max_tokens: int = 512
+    ) -> None:
         super().__init__(
             api_key=api_key,
             model=model,
@@ -148,12 +156,13 @@ class GeminiProvider(OpenAIProvider):
 class LocalExtractiveProvider(LLMProvider):
     provider_name = "offline-extractive"
 
-    def __init__(self, model: str = "offline-extractive", temperature: float = 0.0, max_tokens: int = 512) -> None:
+    def __init__(
+        self, model: str = "offline-extractive", temperature: float = 0.0, max_tokens: int = 512
+    ) -> None:
         super().__init__(model, temperature, max_tokens)
 
     def _chat(self, messages: List[Dict[str, str]]) -> LLMResult:
-        system_text = messages[0].get("content", "") if messages else ""
-        user_text = messages[-1].get("content", "")
+        user_text = messages[-1].get("content", "") if messages else ""
         answer = self._extractive_answer(user_text)
         prompt_tokens = sum(estimate_tokens(m.get("content", "")) for m in messages)
         return LLMResult(
@@ -176,7 +185,9 @@ class LocalExtractiveProvider(LLMProvider):
             sentences = self._split_sentences(block["text"])
             section_tokens = self._meaningful_tokens(block.get("section") or "")
             for sent in sentences:
-                score = self._overlap(question_tokens, sent) + 0.5 * len(set(question_tokens) & set(section_tokens))
+                score = self._overlap(question_tokens, sent) + 0.5 * len(
+                    set(question_tokens) & set(section_tokens)
+                )
                 if score > 0:
                     ranked.append((score, sent, block))
         ranked.sort(key=lambda t: t[0], reverse=True)
@@ -256,8 +267,28 @@ class LocalExtractiveProvider(LLMProvider):
     @staticmethod
     def _meaningful_tokens(text: str) -> List[str]:
         stopwords = {
-            "the", "a", "an", "of", "to", "and", "in", "for", "how", "what", "which",
-            "was", "is", "are", "were", "does", "do", "did", "it", "its", "that", "this",
+            "the",
+            "a",
+            "an",
+            "of",
+            "to",
+            "and",
+            "in",
+            "for",
+            "how",
+            "what",
+            "which",
+            "was",
+            "is",
+            "are",
+            "were",
+            "does",
+            "do",
+            "did",
+            "it",
+            "its",
+            "that",
+            "this",
         }
         tokens = re.findall(r"[a-zA-Z0-9$\-.%]+", text.lower())
         return [t for t in tokens if t not in stopwords and len(t) > 1]
@@ -323,5 +354,7 @@ def build_llm(settings: Settings) -> LLMProvider:
                 temperature=settings.llm_temperature,
                 max_tokens=settings.llm_max_tokens,
             )
-    logger.info("No LLM API key configured; using offline extractive generation (provider=%s).", provider)
+    logger.info(
+        "No LLM API key configured; using offline extractive generation (provider=%s).", provider
+    )
     return LocalExtractiveProvider(model="offline-extractive")

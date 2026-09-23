@@ -121,7 +121,9 @@ def _chat_tab(pipeline: RagPipeline) -> None:
 
 def _console_tab(pipeline: RagPipeline) -> None:
     st.subheader("Retrieval debugger")
-    question = st.text_input("Query", placeholder="What is OpenHands' average cost?", key="console_q")
+    question = st.text_input(
+        "Query", placeholder="What is OpenHands' average cost?", key="console_q"
+    )
     if st.button("Run retrieval", type="primary") and question:
         response = pipeline.answer(question, include_debug=True)
         st.markdown("#### Answer")

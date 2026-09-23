@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from src.schemas import DocumentChunk, RetrievedChunk
+from src.schemas import RetrievedChunk
 
 SYSTEM_PROMPT = """You are a document-grounded research assistant for the paper "Agent-as-a-Judge: Evaluate Agents with Agents".
 
@@ -82,6 +82,6 @@ def no_evidence_prompt(question: str) -> str:
     return (
         "The retrieval layer found no sufficiently relevant evidence in the PDF for this question: "
         f"{question}\n"
-        "Respond with the exact sentence: \"I could not find sufficient evidence for this answer "
-        "in the provided document.\" Do not answer from general knowledge."
+        'Respond with the exact sentence: "I could not find sufficient evidence for this answer '
+        'in the provided document." Do not answer from general knowledge.'
     )

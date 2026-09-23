@@ -126,7 +126,10 @@ class SemanticChunker:
             return "reference"
         if sl.startswith("appendix"):
             return "appendix"
-        if any(m in sl for m in ("method", "framework", "approach", "system overview", "implementation")):
+        if any(
+            m in sl
+            for m in ("method", "framework", "approach", "system overview", "implementation")
+        ):
             return "methodology"
         if self._numeric_density(text) >= 0.05 or text.count("%") >= 3:
             return "result"

@@ -13,9 +13,35 @@ from src.schemas import DocumentChunk, RetrievedChunk
 logger = get_logger(__name__)
 
 _STOPWORDS = {
-    "the", "a", "an", "of", "to", "and", "in", "for", "how", "what", "which",
-    "was", "is", "are", "were", "does", "do", "did", "it", "its", "that", "this",
-    "vs", "vs.", "on", "with", "as", "at", "by",
+    "the",
+    "a",
+    "an",
+    "of",
+    "to",
+    "and",
+    "in",
+    "for",
+    "how",
+    "what",
+    "which",
+    "was",
+    "is",
+    "are",
+    "were",
+    "does",
+    "do",
+    "did",
+    "it",
+    "its",
+    "that",
+    "this",
+    "vs",
+    "vs.",
+    "on",
+    "with",
+    "as",
+    "at",
+    "by",
 }
 
 
@@ -43,6 +69,7 @@ class HybridRetriever:
         alpha: float = 0.7,
         method: str = "weighted",
         min_similarity: float = 0.0,
+        knowledge_floor: float = 0.0,
         chunk_types: Optional[List[str]] = None,
         type_boost: Optional[Dict[str, float]] = None,
     ) -> tuple[List[RetrievedChunk], bool, List[str]]:
@@ -82,7 +109,7 @@ class HybridRetriever:
         if chunk_types:
             fused = [c for c in fused if c.chunk.chunk_type in chunk_types]
 
-        evidence_sufficient = self._sufficient(fused, variants, min_similarity)
+        evidence_sufficient = self._sufficient(fused, variants, min_similarity, knowledge_floor)
         filtered = [c for c in fused if c.hybrid_score <= 0.0]
         fused = [c for c in fused if c.hybrid_score > 0.0]
         fused.sort(key=lambda c: c.hybrid_score, reverse=True)
@@ -90,12 +117,20 @@ class HybridRetriever:
         filtered_ids = [c.chunk.chunk_id for c in filtered]
         return top, evidence_sufficient, filtered_ids
 
-    def _sufficient(self, fused: List[RetrievedChunk], variants: List[str], min_similarity: float) -> bool:
+    def _sufficient(
+        self,
+        fused: List[RetrievedChunk],
+        variants: List[str],
+        min_similarity: float,
+        knowledge_floor: float = 0.0,
+    ) -> bool:
         if not fused:
             return False
         best_cos = max((c.dense_score for c in fused), default=0.0)
         if best_cos >= min_similarity:
             return True
+        if best_cos < knowledge_floor:
+            return False
         query_tokens = {t for v in variants for t in tokenize(v)} - _STOPWORDS
         if len(query_tokens) < 3:
             return False
@@ -114,7 +149,9 @@ class HybridRetriever:
     def _chunk_at(self, idx: int) -> DocumentChunk:
         return self.vector_store.chunks()[idx]
 
-    def _apply_boost(self, fused: List[RetrievedChunk], type_boost: Dict[str, float]) -> List[RetrievedChunk]:
+    def _apply_boost(
+        self, fused: List[RetrievedChunk], type_boost: Dict[str, float]
+    ) -> List[RetrievedChunk]:
         for c in fused:
             boost = type_boost.get(c.chunk.chunk_type, 0.0)
             c.hybrid_score += boost
@@ -145,9 +182,7 @@ class HybridRetriever:
         sparse: Dict[str, float],
         alpha: float,
     ) -> List[RetrievedChunk]:
-        dense_order = {
-            cid: i for i, cid in enumerate(sorted(dense, key=dense.get, reverse=True))
-        }
+        dense_order = {cid: i for i, cid in enumerate(sorted(dense, key=dense.get, reverse=True))}
         sparse_order = {
             cid: i for i, cid in enumerate(sorted(sparse, key=sparse.get, reverse=True))
         }
