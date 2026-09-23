@@ -143,6 +143,7 @@ class RAGResponse:
     retrieval_debug: Optional[RetrievalDebug] = None
     generation: Optional[GenerationInfo] = None
     warning: Optional[str] = None
+    claims: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -155,4 +156,5 @@ class RAGResponse:
             "retrieval_debug": self.retrieval_debug.to_dict() if self.retrieval_debug else None,
             "generation": self.generation.to_dict() if self.generation else None,
             "warning": self.warning,
+            "claims": self.claims,
         }

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.cache import DiskCache
 from src.config import Settings, get_settings, retrieval_config_fingerprint
@@ -288,6 +288,7 @@ class RagPipeline:
             sufficient=validation.claim_supported,
             retrieval_debug=retrieval_debug,
             generation=generation,
+            claims=[c.to_dict() for c in claim_verdicts],
             warning=(
                 security.safe_message
                 if security.flagged
@@ -470,6 +471,7 @@ class RagPipeline:
         warning: Optional[str],
         start: float,
         history: Optional[List[Dict[str, str]]],
+        claims: Optional[List[Dict[str, Any]]] = None,
     ) -> RAGResponse:
         latency_ms = (time.perf_counter() - start) * 1000.0
         if generation is not None:
@@ -501,6 +503,7 @@ class RagPipeline:
             retrieval_debug=retrieval_debug,
             generation=generation,
             warning=warning,
+            claims=claims or [],
         )
         self._log_event(response)
         return response
