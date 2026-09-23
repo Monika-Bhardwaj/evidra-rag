@@ -5,8 +5,8 @@ A production-shaped, **document-grounded RAG chatbot** for the paper
 
 The system ingests the PDF, builds a persistent local vector index, retrieves evidence with a
 **hybrid dense + BM25** pipeline (optional cross-encoder reranking), answers **strictly from the
-retrieved evidence**, and exposes **traceable citations** — plus a full evaluation console and an
-18-step engineering workflow documented below.
+retrieved evidence**, and exposes **traceable citations** — plus an evaluation console and an
+automated 15-question golden-set harness documented below.
 
 > Core principle: **the chatbot answers from evidence, not from imagination.** If the evidence does
 > not support an answer, it says so.
@@ -24,7 +24,7 @@ retrieved evidence**, and exposes **traceable citations** — plus a full evalua
 | **Validation** | Citation & numeric verification: every claim checked against evidence; fabricated numbers rejected |
 | **Security** | Prompt-injection / jailbreak defense: retrieved text is **data, not instructions** |
 | **Evaluation** | 15 golden questions with retrieval metrics (Recall@k, Precision@k, MRR, nDCG), generation metrics (numeric correctness, faithfulness, completeness, page accuracy) and system metrics (latency, tokens, cost) |
-| **Observability** | Structured JSON logging of retrieval/generation metadata; per-query cost + latency tracking; disk caches for queries and answers |
+| **Observability** | Structured JSON logging of retrieval/generation metadata; per-query cost + latency tracking; disk cache for retrieval |
 
 The whole pipeline runs on a laptop with zero API cost for embeddings and retrieval.
 
@@ -63,14 +63,14 @@ Mermaid sources: [`docs/rag_architecture.mmd`](docs/rag_architecture.mmd),
 - Jailbreak / prompt-injection defense (`src/generation/security.py`)
 - Query understanding, expansion and routing (`src/retrieval/query_*`, `routing.py`)
 - Multi-turn conversation support (bounded history)
-- Retrieval + answer disk caching, persistent index (no re-embedding on start)
+- Retrieval disk caching; persistent index (no re-embedding on start)
 - Cost & latency tracking with per-query logs
 - Streamlit chat UI with evidence panel, retrieval debugger, evaluation dashboard
 - FastAPI backend (`/api/query`, `/api/evaluation`, `/api/stats`, ...)
 - Evaluation suite: 15 golden questions, automated metrics, plots and report
 - CLI: `ask.py`, `ingest.py`, `build_index.py`, `evaluate.py`
 - Docker support (compose: API + UI)
-- 25 automated tests (unit / integration / security / regression)
+- 40 automated tests (unit / integration / security / regression)
 
 ---
 
@@ -102,7 +102,7 @@ Mermaid sources: [`docs/rag_architecture.mmd`](docs/rag_architecture.mmd),
 Requires Python 3.10+ (tested 3.10/3.11).
 
 ```bash
-git clone <repo-url> && cd rag-devai-chatbot
+git clone <repo-url> && cd evidra-rag
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
@@ -130,12 +130,16 @@ Key options:
 | `OPENAI_API_KEY` / `OPENAI_MODEL` | — / `gpt-4o-mini` | OpenAI chat completions |
 | `GEMINI_API_KEY` / `GROQ_API_KEY` | — | alternate providers (OpenAI-compatible) |
 | `EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | local embedder |
-| `USE_RERANKER` | `true` | enable/disable cross-encoder reranking |
-| `HYBRID_ALPHA` | `0.7` | dense weight in weighted fusion |
+| `USE_RERANKER` | `false` | enable cross-encoder/score reranking (off by default — Phase 3 ablation measured no lift, see `docs/eval_results/ablation/`) |
+| `RERANKER_KIND` | `cross` | reranker strategy when enabled: `cross` (cross-encoder) \| `score` (hybrid+cosine blend) |
+| `HYBRID_ALPHA` | `0.5` | dense weight in weighted fusion |
 | `HYBRID_METHOD` | `weighted` | `weighted` \| `rrf` |
-| `FINAL_TOP_K` | `4` | evidence chunks sent to the LLM |
+| `FINAL_TOP_K` | `6` | evidence chunks sent to the LLM |
 | `MIN_SIMILARITY` | `0.35` | retrieval confidence gate |
-| `ENABLE_ANSWER_CACHE` | `false` | cache full Q→A responses |
+| `KNOWLEDGE_BOUNDARY_MIN_SIM` | `0.30` | out-of-knowledge floor: if the best dense similarity falls below this, the sparse-token fallback never marks evidence sufficient |
+| `API_MAX_QUESTION_CHARS` | `4000` | question length cap in the FastAPI service |
+| `API_RATE_LIMIT_PER_MIN` | `60` | in-process token-bucket rate limit (per client IP; `0` = off) |
+| `API_AUTH_USERNAME` / `API_AUTH_PASSWORD` | empty | when both set, HTTP Basic auth is required |
 
 No API key → the system runs fully offline with the **extractive evidence fallback**
 (deterministic, grounded quotes — never invented content). Add a key to get free-form
@@ -198,7 +202,7 @@ Two independent retrievers are fused:
 - **Sparse** — BM25 (lexical). Guarantees exact terms like `6.38`, `97.72%`, `cn9o` match.
 
 **Weighted fusion** (default): min-max normalize each score set, combine with
-`alpha * dense + (1 - alpha) * sparse` (`alpha = 0.7`). **RRF** is available for rank-only
+`alpha * dense + (1 - alpha) * sparse` (`alpha = 0.5`). **RRF** is available for rank-only
 fusion. Then optional cross-encoder reranking re-orders candidates by query–chunk relevance.
 Numeric questions are routed to boost `table` / `result` / `cost-analysis` chunks so exact
 values like OpenHands' `$6.38` / `362.41 s` are pulled from Table 1 rather than from a

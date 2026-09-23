@@ -27,6 +27,7 @@ index/
 # OS artifacts
 .DS_Store
 Thumbs.db
+page5.txt
 
 # Model caches
 .cache/huggingface/

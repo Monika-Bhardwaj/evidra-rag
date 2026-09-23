@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 from typing import List
 
 import numpy as np
 
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.ingest import run_ingestion
 from src.config import Settings, get_settings
@@ -63,13 +64,33 @@ def main() -> None:
     chunks = run_ingestion(settings)
 
     embedder = build_embedder(settings)
-    logger.info("Encoding %d chunks with %s (device=%s)...", len(chunks), embedder.name(), settings.embedding_device)
+    logger.info(
+        "Encoding %d chunks with %s (device=%s)...",
+        len(chunks),
+        embedder.name(),
+        settings.embedding_device,
+    )
     vectors = embedder.encode([c.text for c in chunks])
 
     store = FAISSVectorStore()
     store.add(chunks, np.ascontiguousarray(vectors, dtype=np.float32))
     store.save(settings.index_dir_path)
-    logger.info("FAISS index saved to %s (%d vectors, dim=%d)", settings.index_dir_path, len(chunks), vectors.shape[1])
+    logger.info(
+        "FAISS index saved to %s (%d vectors, dim=%d)",
+        settings.index_dir_path,
+        len(chunks),
+        vectors.shape[1],
+    )
+
+    meta = {
+        "embedding_model": settings.embedding_model,
+        "embedder_name": embedder.name(),
+        "dim": int(vectors.shape[1]),
+        "num_chunks": len(chunks),
+    }
+    meta_path = settings.index_dir_path / "index_meta.json"
+    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    logger.info("Wrote index metadata to %s", meta_path)
 
     build_gold_evidence_map(settings, chunks)
     logger.info("Index build complete.")

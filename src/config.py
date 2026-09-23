@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -42,19 +41,27 @@ class Settings(BaseSettings):
     hybrid_alpha: float = 0.5
     hybrid_method: Literal["weighted", "rrf"] = "weighted"
     min_similarity: float = 0.35
+    knowledge_boundary_min_sim: float = 0.30
     use_query_expansion: bool = True
     use_query_routing: bool = True
     context_max_tokens: int = 4000
 
-    use_reranker: bool = True
+    use_reranker: bool = False
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    reranker_kind: Literal["cross", "score"] = "cross"
 
     enable_retrieval_cache: bool = True
-    enable_answer_cache: bool = False
     cache_dir: str = "data/processed/cache"
 
     eval_questions_path: str = "src/evaluation/questions.json"
     eval_report_path: str = "docs/evaluation_report.md"
+    abstain_questions_path: str = "src/evaluation/abstain_questions.json"
+    adversarial_cases_path: str = "src/evaluation/adversarial_cases.json"
+
+    api_max_question_chars: int = 4000
+    api_auth_username: str = ""
+    api_auth_password: str = ""
+    api_rate_limit_per_min: int = 60
 
     data_dir: str = "data"
     raw_dir: str = "data/raw"
@@ -109,6 +116,14 @@ class Settings(BaseSettings):
     @property
     def eval_report_path_resolved(self) -> Path:
         return self.resolve(self.eval_report_path)
+
+    @property
+    def abstain_questions_path_resolved(self) -> Path:
+        return self.resolve(self.abstain_questions_path)
+
+    @property
+    def adversarial_cases_path_resolved(self) -> Path:
+        return self.resolve(self.adversarial_cases_path)
 
     def ensure_dirs(self) -> None:
         for d in (

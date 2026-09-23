@@ -25,14 +25,12 @@ Chunk metadata: `chunk_id`, `page`, `section`, `chunk_type`, `document_id`, `sou
 ## Retrieval (`src/retrieval/`)
 
 - `embeddings.py` — `Embedder` interface. `SentenceTransformerEmbedder` (local, CPU) is the
-  default; `APIEmbedder` (OpenAI-compatible) is available for swap. Embeddings are
-  L2-normalised so FAISS inner-product == cosine similarity.
-- `vector_store.py` — `VectorStore` interface with three backends: `FAISSVectorStore`
-  (default, persisted), `InMemoryVectorStore` (fallback when FAISS is unavailable), and
-  `ChromaVectorStore` (alternative persistent backend).
+  default. Embeddings are L2-normalised so FAISS inner-product == cosine similarity.
+- `vector_store.py` — `VectorStore` interface with two backends: `FAISSVectorStore`
+  (default, persisted) and `InMemoryVectorStore` (fallback when FAISS is unavailable).
 - `bm25.py` — lexical retrieval with `rank_bm25` (`BM25Okapi`).
 - `hybrid.py` — `HybridRetriever` fuses dense + sparse:
-  - **weighted** (default, `alpha=0.7`): min-max-normalised dense and sparse scores combined
+  - **weighted** (default, `alpha=0.5`): min-max-normalised dense and sparse scores combined
     as `alpha * dense + (1-alpha) * sparse`.
   - **rrf**: Reciprocal Rank Fusion.
   - Applies metadata filters, `type_boost`, a retrieval confidence threshold, and returns a
