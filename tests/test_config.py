@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from src.config import Settings, retrieval_config_fingerprint
@@ -53,6 +51,11 @@ def test_fingerprint_ignores_generation_and_ops_settings() -> None:
     assert retrieval_config_fingerprint(base) == retrieval_config_fingerprint(altered)
 
 
-def test_fingerprint_known_string(tmp_path: Path) -> None:
-    """Pin the fingerprint of the shipped default config so drift is caught early."""
-    assert retrieval_config_fingerprint(Settings()) == retrieval_config_fingerprint(Settings())
+def test_fingerprint_known_string() -> None:
+    """Pin the default-config fingerprint hash to a literal.
+
+    If this constant changes, either a retrieval-affecting default changed (intended,
+    but then the change must ship with a new eval archive) or the fingerprint function
+    itself drifted silently (which would poison cache keys).
+    """
+    assert retrieval_config_fingerprint(Settings()) == "4ddfdff25521"
